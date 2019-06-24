@@ -5,117 +5,184 @@
 # Material list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
 
 Blocks:
-    # The block that gets broken
-    DIAMOND_ORE:
-        # The block to replace it with.
-        replace-block: PODZOL
-        # The delay in which this block regens to its original state
-        # In seconds
-        regen-delay: 3
-        # If you installed Vault you can give players money. Set to 0 to disable
-        money: 100
-        # You can specify a command that is executed by the console
-        # Example: console-command: "give %player% apple 64"
-        # Leave empty to ignore this function
-        console-command: "say The console-command function is working!"
-        # You can specify a command that is executed by the player itself
-        # Example: console-command: "me I, %player%, executed this command"
-        # Leave empty to ignore this function
-        player-command: "me I, %player%, executed this command"
-        # This option allows you to set a tool that people need to have to break the block.
-        # If they don't have this tool they get an error message (Messages.yml)
-        tool-required: DIAMOND_PICKAXE, IRON_PICKAXE
-        # Just like tool requirement, you can also require enchants.
-        # Format is the same as "tool-required" but with enchantments ofcourse.
-        #enchant-required: FORTUNE, MENDING
-        # JOBS-SUPPORT
-        # You can check what job and what level a player needs to be.
-        # Format: Job;Level
-        #jobs-check: Farmer;2
-        # On break there can be particles displayed.
-        # For a list of options see: 
-        particles: flame_crown
-        # Give drops, exp and amount as it would be in vanilla.
-        # Set this to false to use the other options.
-        natural-break: false
-        # If natural-break set to false then the drop-item section is used
-        drop-item:
-            # The material of the dropped item.
-            material: DIORITE
-            # The name that is given to the dropped item
-            name: "&6&l[&3BlockRegen&6&l]"
-            # The lores that are given to the dropped item
-            lores:
-            - "&fThese are some lores"
-            - "&cAnd &6they &eeven &asupport &dcolors!"
-            # drop-naturally to false sends it directly to the players inventory if there is place (drops it otherwise)
-            # Setting it to true drops it on the ground as it would in vanilla
+  # The block that gets broken
+  DIAMOND_ORE:
+    # The block to replace it with.
+    replace-block: PODZOL
+    # The delay in which this block regens to its original state
+    # In seconds
+    regen-delay: 3
+    # If you installed Vault you can give players money. Set to 0 to disable
+    money: 100
+    # You can specify a command that is executed by the console
+    # Example: console-command: "give %player% apple 64"
+    # Leave empty to ignore this function
+    console-command: "say The console-command function is working!"
+    # You can specify a command that is executed by the player itself
+    # Example: console-command: "me I, %player%, executed this command"
+    # Leave empty to ignore this function
+    player-command: "me I, %player%, executed this command"
+    # This option allows you to set a tool that people need to have to break the block.
+    # If they don't have this tool they get an error message (Messages.yml)
+    tool-required: DIAMOND_PICKAXE, IRON_PICKAXE
+    # Just like tool requirement, you can also require enchants.
+    # Format is the same as "tool-required" but with enchantments ofcourse.
+    #enchant-required: FORTUNE, MENDING
+    # JOBS-SUPPORT
+    # You can check what job and what level a player needs to be.
+    # Format: Job;Level
+    #jobs-check: Farmer;2
+    # On break there can be particles displayed.
+    # For a list of options see:
+    particles: flame_crown
+    # Give drops, exp and amount as it would be in vanilla.
+    # Set this to false to use the other options.
+    natural-break: false
+    # If natural-break set to false then the drop-item section is used
+    drop-item:
+      # The material of the dropped item.
+      material: DIORITE
+      # The name that is given to the dropped item
+      name: "&6&l[&3BlockRegen&6&l]"
+      # The lores that are given to the dropped item
+      lores:
+        - "&fThese are some lores"
+        - "&cAnd &6they &eeven &asupport &dcolors!"
+      # drop-naturally to false sends it directly to the players inventory if there is place (drops it otherwise)
+      # Setting it to true drops it on the ground as it would in vanilla
+      drop-naturally: false
+      exp:
+        # drop-naturally to false gives the player the amount of exp directly
+        # Setting it to true drops it on the ground as it would in vanilla
+        drop-naturally: true
+        # The amount of exp it gives
+        amount: 100
+      # How many should the player get?
+      # This generates a random number between, in this case, 0 and 5
+      amount:
+        high: 5
+        low: 0
+    # Events are added in 2.0 and can do a few things already
+    # It can double drops on specific ores, give double exp or make ores have a chance of dropping custom equips
+    # Not wish to use this? You can completly remove it without getting null errors
+    # Below is an example. Read more info on the spigot updates page.
+    event:
+      event-name: Double Diamonds
+      # Bossbar option are 1.9 and above only
+      bossbar:
+        name: "&bDiamonds, diamonds everywhere!"
+        color: BLUE
+      double-drops: true
+      double-exp: false
+      custom-item:
+        enabled: false
+        material: LEATHER_BOOTS
+        name: "&dFancy &bshoes"
+        lores:
+          - "&fLook at them shoessss"
+          - "&eBling bling bling"
+        drop-naturally: false
+        # How rare it is to get the item. In this case a 1 in 50 chance of getting it.
+        rarity: 50
+  SPRUCE_LOG:
+    replace-block: BEDROCK
+    regen-delay: 3
+    money: 5
+    console-command: "say %player% is a badass lumberjack.."
+    natural-break: false
+    drop-item:
+      material: APPLE
+      name: "&eHealthy Snack"
+      lores:
+        - "&fA apple a day"
+        - "&4Keeps Samsung away?"
+      drop-naturally: false
+      exp:
+        drop-naturally: false
+        amount: 100
+      amount:
+        high: 5
+        low: 0
+    event:
+      event-name: Quackers
+      bossbar:
+        name: "&aQuack quack quack"
+        color: GREEN
+      double-drops: false
+      double-exp: false
+      custom-item:
+        enabled: true
+        material: Bread
+        name: "&eGive it to them ducks"
+        lores:
+          - "&dCrumbling"
+          - "&aQuack quack quack"
+        drop-naturally: true
+        rarity: 10
+  # Example for 3.6.0, old formatting still works, no changes needed to upgrade from lower plugin versions.
+  GOLD_ORE:
+    # Has to be present for the block format to work, everything else can be removed.
+    replace-block: STONE
+    # Should the plugin regen the block? Yeah, it's actually usefull.
+    # Defaults to true, you can remove it peacefully.
+    regenerate: true
+      # Defaults to 3 seconds when missing
+      regen-delay: 3
+      # Can be defined by random/fixed amount.
+      money:
+        low: 100
+        high: 1000
+      # Supports PAPI placeholders!
+      # Works with console-commands also.
+      console-command:
+        - 'say %vault_prefix% %player_name% Mined a block, wow.'
+      # Yeah, this works too.
+      player-commands: 'me Wooohooo!'
+      # Now works with minimum level of an enchant, just like jobs.
+      # Enchant;level
+      enchant-required: FORTUNE, UNBREAKING;2
+      # No changes here.
+      tool-required: GOLDEN_PICKAXE
+      # No changes, also.
+      jobs-check: Farmer;2
+      # Defaults to false when missing.
+      natural-break: false
+      # drop-item(s), both works.
+      drop-items:
+        # need a name to seperate them.
+        pure_gold:
+          # From now on works like before.
+          # Need at least material to work.
+          material: GOLD_NUGGET
+          # Supports PAPI placeholders!
+          name: '&6Pure gold nugget'
+          lores:
+            - '&7Mined by %player_name%'
+          drop-naturally: false
+          exp:
             drop-naturally: false
-            exp:
-                # drop-naturally to false gives the player the amount of exp directly
-                # Setting it to true drops it on the ground as it would in vanilla
-                drop-naturally: true
-                # The amount of exp it gives
-                amount: 100
-            # How many should the player get?
-            # This generates a random number between, in this case, 0 and 5
+            # Amounts now support fixed or random amount.
+            # random == high and low
+            # fixed == just a number
             amount:
-                high: 5
-                low: 0
-        # Events are added in 2.0 and can do a few things already
-        # It can double drops on specific ores, give double exp or make ores have a chance of dropping custom equips
-        # Not wish to use this? You can completly remove it without getting null errors
-        # Below is an example. Read more info on the spigot updates page.
-        event:
-            event-name: Double Diamonds
-            # Bossbar option are 1.9 and above only
-            bossbar:
-                name: "&bDiamonds, diamonds everywhere!" 
-                color: BLUE
-            double-drops: true
-            double-exp: false
-            custom-item:
-                enabled: false
-                material: LEATHER_BOOTS
-                name: "&dFancy &bshoes"
-                lores:
-                - "&fLook at them shoessss"
-                - "&eBling bling bling"
-                drop-naturally: false
-                # How rare it is to get the item. In this case a 1 in 50 chance of getting it.
-                rarity: 50
-    SPRUCE_LOG:
-        replace-block: BEDROCK
-        regen-delay: 3
-        money: 5
-        console-command: "say %player% is a badass lumberjack.."
-        natural-break: false
-        drop-item:
-            material: APPLE
-            name: "&eHealthy Snack"
-            lores:
-            - "&fA apple a day"
-            - "&4Keeps Samsung away?"
-            drop-naturally: false
-            exp:
-                drop-naturally: false
-                amount: 100
-            amount:
-                high: 5
-                low: 0
-        event:
-            event-name: Quackers
-            bossbar:
-                name: "&aQuack quack quack"
-                color: GREEN
-            double-drops: false
-            double-exp: false
-            custom-item:
-                enabled: true
-                material: Bread
-                name: "&eGive it to them ducks"
-                lores:
-                - "&dCrumbling"
-                - "&aQuack quack quack"
-                drop-naturally: true
-                rarity: 10
+              low: 0
+              high: 1
+          amount:
+            low: 0
+            high: 2
+        boulder:
+          material: STONE
+          # Fixed amount
+          amount: 1
+      # No changes in events.
+      event:
+        # Only the name is needed in order for the event to work.
+        event-name: '&6Gold fever'
+        double-drops: true
+        # Bossbar can now be fully removed.
+        # Color defaults to Yellow, title to 'Event ... is active'
+        # (if both are absent, bossbar won't be used)
+        # You can use %event% placeholder to get the colored name.
+        bossbar:
+          color: RED
+          title: '&7Event %event% &7is active!'

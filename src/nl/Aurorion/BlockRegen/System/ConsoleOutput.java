@@ -22,10 +22,6 @@ public class ConsoleOutput {
         this.prefix = prefix;
     }
 
-    public boolean isDebug() {
-        return debug;
-    }
-
     public void debug(String msg) {
         if (debug)
             main.getServer().getLogger().info(prefix + "§7DEBUG: " + Utils.color(msg));

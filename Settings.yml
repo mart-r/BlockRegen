@@ -6,6 +6,12 @@
 # Get notified when there is a new version available
 Update-Checker: true
 
+# Debug spams the console with inner action tracking, enable this when asked by the dev, helps a lot. ;)
+Debug-Enabled: false
+
+# Should Update Checker notify players with blockregen.admin?
+Update-Notify-Admins: true
+
 # If you have WorldEdit installed and wish to make and use regions then set this to true
 Use-Regions: false
 
