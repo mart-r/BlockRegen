@@ -19,6 +19,8 @@ public class Drop {
 
     private String displayName;
     private List<String> lore;
+    private List<String> enchants;
+    private List<String> flags;
 
     // Muh.
     private boolean dropNaturally;
