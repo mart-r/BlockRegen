@@ -5,7 +5,7 @@ import nl.Aurorion.BlockRegen.Utils;
 
 public class ConsoleOutput {
 
-    private Main main;
+    private final Main main;
 
     private boolean debug;
     private String prefix;
@@ -20,10 +20,6 @@ public class ConsoleOutput {
 
     public void setPrefix(String prefix) {
         this.prefix = prefix;
-    }
-
-    public boolean isDebug() {
-        return debug;
     }
 
     public void debug(String msg) {

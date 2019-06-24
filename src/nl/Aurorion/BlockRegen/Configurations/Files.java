@@ -11,8 +11,16 @@ import org.bukkit.plugin.Plugin;
 
 public class Files {
 	
-	public File sfile, mfile, bfile, rfile, dfile;
-	public FileConfiguration settings, messages, blocklist, regions, data;
+	private final File sfile;
+    private final File mfile;
+    private final File bfile;
+    private final File rfile;
+    private File dfile;
+	public FileConfiguration settings;
+    public FileConfiguration messages;
+    private FileConfiguration blocklist;
+    private FileConfiguration regions;
+    private FileConfiguration data;
 	
 	public Files(Plugin plugin) {
 		

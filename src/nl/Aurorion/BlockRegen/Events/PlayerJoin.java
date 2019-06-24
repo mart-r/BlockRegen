@@ -10,7 +10,7 @@ import nl.Aurorion.BlockRegen.Main;
 
 public class PlayerJoin implements Listener {
 	
-	private Main main;
+	private final Main main;
 	
 	public PlayerJoin(Main instance) {
 		this.main = instance;
