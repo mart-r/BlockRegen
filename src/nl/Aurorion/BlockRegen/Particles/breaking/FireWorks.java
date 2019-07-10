@@ -17,8 +17,8 @@ import java.util.Random;
 
 public class FireWorks implements Runnable {
 
-    private final Main main;
-    private final Block block;
+    private Main main;
+    private Block block;
 
     public FireWorks(Main instance, Block block) {
         this.main = instance;

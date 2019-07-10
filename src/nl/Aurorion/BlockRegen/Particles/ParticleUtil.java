@@ -12,13 +12,13 @@ import java.util.HashMap;
 
 public class ParticleUtil {
 
-    private final Main main;
+    private Main main;
 
     public ParticleUtil(Main instance) {
         this.main = instance;
     }
 
-    private final HashMap<Block, BukkitTask> tasks = new HashMap<>();
+    private HashMap<Block, BukkitTask> tasks = new HashMap<>();
 
     public void check(String particleName, Block block) {
 

@@ -16,6 +16,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.boss.BossBar;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -55,6 +56,15 @@ public class Main extends JavaPlugin {
 
     private boolean placeholderAPI = false;
     private boolean over18 = false;
+    private boolean useRegenTimes = false;
+
+    public boolean useRegenTimes() {
+        return useRegenTimes;
+    }
+
+    public void useRegenTimes(boolean useRegenTimes) {
+        this.useRegenTimes = useRegenTimes;
+    }
 
     public boolean isOver18() {
         return over18;
@@ -68,19 +78,23 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
-        registerClasses(); // Also generates files
+        files = new Files(this);
 
         // Setup ConsoleOutput
         cO = new ConsoleOutput(this);
         cO.setDebug(files.settings.getBoolean("Debug-Enabled", false));
         cO.setPrefix(Utils.color(files.messages.getString("Messages.Prefix")));
 
-        formatHandler = new FormatHandler(this);
-
-        // pche..
+        // Versions, just to remove the need to check every, single, time.
 
         if (getVersion().contains("1_12") || getVersion().contains("1_9") || getVersion().contains("1_10") || getVersion().contains("1_11"))
             over18 = true;
+
+        cO.debug("Version: " + getVersion() + " Over 1.8: " + over18);
+
+        registerClasses(); // Also generates files
+
+        formatHandler = new FormatHandler(this);
 
         registerCommands();
         registerEvents();
@@ -114,6 +128,10 @@ public class Main extends JavaPlugin {
             }, 20L);
         }
 
+        cO.info("Loading breaks..");
+        FileConfiguration data = getFiles().getData();
+        data.getKeys(false).forEach(locString -> Utils.regenTimesBlocks.put(Utils.stringToLocation(locString), data.getInt(locString)));
+
         cO.info("§aDone loading.");
 
         cO.info("You are using version " + getDescription().getVersion());
@@ -133,14 +151,18 @@ public class Main extends JavaPlugin {
         for (BossBar bossBar : Utils.bars.values())
             bossBar.removeAll();
 
+        Utils.regenTimesBlocks.keySet().forEach(loc -> getFiles().getData().set(Utils.locationToString(loc), Utils.regenTimesBlocks.get(loc)));
+
+        getFiles().saveData();
+
         instance = null;
     }
 
     private void registerClasses() {
-        files = new Files(this);
         particleUtil = new ParticleUtil(this);
         getters = new Getters(this);
         random = new Random();
+
         enchantUtil = new EnchantUtil();
     }
 
@@ -171,14 +193,14 @@ public class Main extends JavaPlugin {
 
     private boolean setupEconomy() {
         if (this.getServer().getPluginManager().getPlugin("Vault") == null) {
-            cO.info("Didn't found Vault. &cEconomy functions disabled.");
+            cO.info("&eDidn't found Vault. &cEconomy functions disabled.");
             return false;
         }
 
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
 
         if (rsp == null) {
-            cO.info("Vault found, but no economy plugin. &cEconomy functions disabled.");
+            cO.info("&eVault found, but no economy plugin. &cEconomy functions disabled.");
             return false;
         }
 
@@ -235,12 +257,12 @@ public class Main extends JavaPlugin {
 
     private void recoveryCheck() {
         if (getGetters().dataRecovery()) {
-            Set<String> set = files.getData().getKeys(false);
+            Set<String> set = files.getRecoveryData().getKeys(false);
             if (!set.isEmpty()) {
                 cO.info("Recovering blocks..");
                 while (set.iterator().hasNext()) {
                     String name = set.iterator().next();
-                    List<String> list = files.getData().getStringList(name);
+                    List<String> list = files.getRecoveryData().getStringList(name);
                     for (String s : list) {
                         Location loc = Utils.stringToLocation(s);
                         loc.getBlock().setType(Material.valueOf(name));
@@ -251,11 +273,11 @@ public class Main extends JavaPlugin {
                 cO.info("Done.");
             }
 
-            for (String key : files.getData().getKeys(false)) {
-                files.getData().set(key, null);
+            for (String key : files.getRecoveryData().getKeys(false)) {
+                files.getRecoveryData().set(key, null);
             }
 
-            files.saveData();
+            files.saveRecoveryData();
         }
     }
 

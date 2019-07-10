@@ -2,8 +2,8 @@ package nl.Aurorion.BlockRegen.BlockFormat;
 
 public class JobRequirement {
 
-    private final String job;
-    private final int level;
+    private String job;
+    private int level;
 
     public JobRequirement(String job, int level) {
         this.job = job;

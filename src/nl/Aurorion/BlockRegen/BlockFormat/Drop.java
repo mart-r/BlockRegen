@@ -16,6 +16,7 @@ public class Drop {
     // Todo add more ItemStack data
 
     private Material material;
+    private byte data;
 
     private String displayName;
     private List<String> lore;
@@ -46,7 +47,7 @@ public class Drop {
 
     public Drop(String material) {
         try {
-            this.material = Material.valueOf(material.toUpperCase());
+            this.material = Material.valueOf(material.split(";")[0].toUpperCase());
         } catch (NullPointerException e) {
             Main.getInstance().cO.warn(material + " is not a valid Material, skipping the drop item..");
             valid = false;
@@ -69,6 +70,14 @@ public class Drop {
             this.displayName = "";
         else
             this.displayName = displayName;
+    }
+
+    public byte getData() {
+        return data;
+    }
+
+    public void setData(byte data) {
+        this.data = data;
     }
 
     public List<String> getLore() {
@@ -123,12 +132,11 @@ public class Drop {
     }
 
     public String toString() {
-        return material.toString() + ", " + displayName + ", " + lore.toString() + ", " + dropExpNaturally + ", " + dropExpNaturally + ", " + amount.toString();
+        return material.toString() + ":" + data + ", " + displayName + ", " + lore.toString() + ", " + dropNaturally + ", " + dropExpNaturally + ", " + amount.toString() + ", " + expAmount.toString();
     }
 
     public ItemStack getItemStack(Player player) {
-        ItemStack item = new ItemStack(material, amount.getAmount());
-
+        ItemStack item = new ItemStack(material, amount.getAmount(), data);
         ItemMeta meta = item.getItemMeta();
 
         if (Main.getInstance().isPlaceholderAPI()) {

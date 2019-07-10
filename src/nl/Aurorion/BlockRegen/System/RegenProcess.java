@@ -9,11 +9,21 @@ public class RegenProcess {
     private Location loc;
     private BukkitTask task;
     private Material material;
+    private byte data;
 
-    public RegenProcess(Location loc, BukkitTask task, Material material) {
+    public RegenProcess(Location loc, BukkitTask task, Material material, Byte data) {
         this.loc = loc;
         this.task = task;
         this.material = material;
+        this.data = data;
+    }
+
+    public byte getData() {
+        return data;
+    }
+
+    public void setData(byte data) {
+        this.data = data;
     }
 
     public void cancelTask() {

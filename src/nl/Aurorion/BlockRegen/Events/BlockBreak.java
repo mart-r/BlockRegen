@@ -27,7 +27,7 @@ import java.util.Set;
 
 public class BlockBreak implements Listener {
 
-    private final Main main;
+    private Main main;
 
     public BlockBreak(Main main) {
         this.main = main;
@@ -105,17 +105,15 @@ public class BlockBreak implements Listener {
             }
         }
 
-        Material blockType = block.getType();
+        if (blockTypes.contains(blockName.toUpperCase()) || blockTypes.contains(blockName.toUpperCase() + ";" + block.getData())) {
+            BlockBR blockBR;
 
-        // Not our block
-        if (!blockTypes.contains(blockName)) {
-            if (isInRegion)
-                if (disableBreakRegions | disableBreak)
-                    event.setCancelled(true);
-            if (disableBreak)
-                event.setCancelled(true);
-        } else {
-            BlockBR blockBR = Main.getInstance().getFormatHandler().getBlockBR(blockName);
+            if (blockTypes.contains(blockName.toUpperCase() + ";" + block.getData()))
+                blockBR = Main.getInstance().getFormatHandler().getBlockBR(blockName.toUpperCase() + ";" + block.getData());
+            else
+                blockBR = Main.getInstance().getFormatHandler().getBlockBR(blockName.toUpperCase());
+
+            main.cO.debug("Checking..");
 
             int expToDrop = event.getExpToDrop();
 
@@ -135,7 +133,7 @@ public class BlockBreak implements Listener {
                 event.setExpToDrop(0);
 
                 // Continue to reward
-                blockBreak(player, block, blockName, expToDrop, blockType);
+                blockBreak(player, block, blockName, expToDrop, blockBR);
             } else {
                 // World
                 if (!useRegions) {
@@ -146,19 +144,25 @@ public class BlockBreak implements Listener {
 
                     if (Main.getInstance().isOver18())
                         event.setDropItems(false);
-                     else
+                    else
                         event.setCancelled(true);
 
                     event.setExpToDrop(0);
 
                     // Continue to reward
-                    blockBreak(player, block, blockName, expToDrop, blockType);
+                    blockBreak(player, block, blockName, expToDrop, blockBR);
                 }
             }
+        } else {
+            if (isInRegion)
+                if (disableBreakRegions | disableBreak)
+                    event.setCancelled(true);
+            if (disableBreak)
+                event.setCancelled(true);
         }
     }
 
-    private void blockBreak(Player player, Block block, String blockname, Integer exptodrop, Material blockType) {
+    private void blockBreak(Player player, Block block, String blockname, Integer exptodrop, BlockBR blockBR) {
 
         Getters getters = main.getGetters();
         BlockState state = block.getState();
@@ -166,23 +170,42 @@ public class BlockBreak implements Listener {
 
         // Reward player
 
-        BlockBR blockBR = Main.getInstance().getFormatHandler().getBlockBR(blockname);
-
         blockBR.reward(player, block, exptodrop);
+
+        Material blockType = block.getType();
+        Byte blockData = block.getData();
 
         // Replacing the block ---------------------------------------------------------------------------------
         new BukkitRunnable() {
             @Override
             public void run() {
                 block.setType(blockBR.getReplaceBlock());
+                block.setData(blockBR.getReplaceBlockData());
+                main.cO.debug("Replacing with: " + blockBR.getReplaceBlock().toString() + ";" + blockBR.getReplaceBlockData());
             }
         }.runTaskLater(main, 2L);
 
         if (blockBR.isRegenerate()) {
             // Actual Regeneration -------------------------------------------------------------------------------------
 
+            main.cO.debug(Utils.regenTimesBlocks.toString());
+
+            // Check for number of regens
+            if (blockBR.getRegenTimes() > 0) {
+                if (Utils.regenTimesBlocks.containsKey(block.getLocation())) {
+                    if ((Utils.regenTimesBlocks.get(block.getLocation()) - 1) <= 0) {
+                        Utils.regenTimesBlocks.remove(block.getLocation());
+                        return;
+                    } else
+                        Utils.regenTimesBlocks.put(block.getLocation(), Utils.regenTimesBlocks.get(block.getLocation()) - 1);
+                } else
+                    Utils.regenTimesBlocks.put(block.getLocation(), blockBR.getRegenTimes() - 1);
+            }
+
+            main.cO.debug("Breaks left: " + Utils.regenTimesBlocks.get(block.getLocation()));
+
             // Data Recovery
-            FileConfiguration data = main.getFiles().getData();
+            FileConfiguration data = main.getFiles().getRecoveryData();
 
             if (getters.dataRecovery()) {
 
@@ -193,8 +216,10 @@ public class BlockBreak implements Listener {
 
                 dataLocs.add(Utils.locationToString(loc));
                 data.set(blockname, dataLocs);
-                main.getFiles().saveData();
+                main.getFiles().saveRecoveryData();
             }
+
+            // Add the regen process
 
             int regenDelay = blockBR.getRegenDelay();
 
@@ -209,14 +234,14 @@ public class BlockBreak implements Listener {
                         if (dataLocs != null && !dataLocs.isEmpty()) {
                             dataLocs.remove(Utils.locationToString(loc));
                             data.set(blockname, dataLocs);
-                            main.getFiles().saveData();
+                            main.getFiles().saveRecoveryData();
                         }
                     }
                 }
             }.runTaskLater(main, regenDelay * 20);
 
-            Utils.addProcess(loc, task, blockType);
+            Utils.addProcess(loc, task, blockType, blockData);
+            main.cO.debug(Utils.regenTimesBlocks.toString());
         }
     }
-
 }

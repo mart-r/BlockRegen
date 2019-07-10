@@ -27,7 +27,10 @@ public class BlockBR {
      * */
 
     private Material blockType;
+    private byte blockData;
+
     private Material replaceBlock;
+    private byte replaceBlockData;
 
     private boolean regenerate;
 
@@ -38,6 +41,7 @@ public class BlockBR {
     private List<String> playerCommands;
     private String particle;
     private Amount money;
+    private int regenTimes;
 
     private List<String> toolsRequired;
     private List<String> enchantsRequired;
@@ -54,7 +58,7 @@ public class BlockBR {
 
     public BlockBR(String blockType, String replaceBlock) {
         try {
-            this.blockType = Material.valueOf(blockType.toUpperCase());
+            this.blockType = Material.valueOf(blockType.split(";")[0].toUpperCase());
         } catch (IllegalArgumentException e) {
             Main.getInstance().cO.warn(blockType + " is not a valid Material, skipping the whole block..");
             valid = false;
@@ -62,14 +66,23 @@ public class BlockBR {
         }
 
         try {
-            this.replaceBlock = Material.valueOf(replaceBlock.toUpperCase());
+            this.replaceBlock = Material.valueOf(replaceBlock.split(";")[0].toUpperCase());
         } catch (IllegalArgumentException e) {
             Main.getInstance().cO.warn(replaceBlock + " is not a valid Material, skipping the whole block..");
             valid = false;
             return;
         }
 
+        this.toolsRequired = new ArrayList<>();
         valid = true;
+    }
+
+    public int getRegenTimes() {
+        return regenTimes;
+    }
+
+    public void setRegenTimes(int regenTimes) {
+        this.regenTimes = regenTimes;
     }
 
     public Amount getMoney() {
@@ -78,10 +91,6 @@ public class BlockBR {
 
     public void setMoney(Amount money) {
         this.money = money;
-    }
-
-    public void setValid(boolean valid) {
-        this.valid = valid;
     }
 
     public void reward(Player player, Block block, int expDrop, Location... loc) {
@@ -233,7 +242,7 @@ public class BlockBR {
 
         if (!enchantsRequired.isEmpty()) {
             for (String enchant : enchantsRequired) {
-                Enchantment enchantment = Main.getInstance().getEnchantUtil().get(enchant);
+                Enchantment enchantment = Main.getInstance().getEnchantUtil().get(enchant.split(";")[0]);
 
                 if (tool.getItemMeta().hasEnchant(enchantment)) {
                     if (enchant.contains(";"))
@@ -289,24 +298,28 @@ public class BlockBR {
         return true;
     }
 
-    public Material getBlockType() {
-        return blockType;
-    }
-
-    public void setBlockType(Material blockType) {
-        this.blockType = blockType;
-    }
-
     public Material getReplaceBlock() {
         return replaceBlock;
     }
 
-    public void setReplaceBlock(Material replaceBlock) {
-        this.replaceBlock = replaceBlock;
-    }
-
     public int getRegenDelay() {
         return regenDelay;
+    }
+
+    public byte getBlockData() {
+        return blockData;
+    }
+
+    public byte getReplaceBlockData() {
+        return replaceBlockData;
+    }
+
+    public void setReplaceBlockData(byte replaceBlockData) {
+        this.replaceBlockData = replaceBlockData;
+    }
+
+    public void setBlockData(byte blockData) {
+        this.blockData = blockData;
     }
 
     public void setRegenDelay(int regenDelay) {
@@ -340,7 +353,16 @@ public class BlockBR {
     }
 
     public void setToolsRequired(List<String> toolsRequired) {
-        this.toolsRequired = toolsRequired;
+        for (String toolString : toolsRequired) {
+            try {
+                Material mat = Material.valueOf(toolString.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                Main.getInstance().cO.warn("Tool material " + toolString + " is not valid, skipping.");
+                continue;
+            }
+
+            this.toolsRequired.add(toolString);
+        }
     }
 
     public List<String> getEnchantsRequired() {
@@ -350,7 +372,15 @@ public class BlockBR {
     public void setEnchantsRequired(List<String> enchantsRequired) {
         List<String> finalEnchants = new ArrayList<>();
         for (String enchant : enchantsRequired) {
-            if (Main.getInstance().getEnchantUtil().get(enchant) != null)
+            try {
+                if (enchant.contains(";"))
+                    if (enchant.split(";")[1] == null)
+                        enchant += "";
+            } catch (ArrayIndexOutOfBoundsException e) {
+                enchant = enchant.replace(";", "");
+            }
+
+            if (Main.getInstance().getEnchantUtil().get(enchant.split(";")[0]) != null)
                 finalEnchants.add(enchant);
             else
                 Main.getInstance().cO.warn("Enchant " + enchant.toUpperCase() + " not valid, skipping.");

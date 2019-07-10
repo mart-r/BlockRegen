@@ -9,7 +9,7 @@ public class Amount {
     private int lowValue;
     private int highValue;
 
-    private final boolean fixed;
+    private boolean fixed;
 
     public Amount(int low, int high) {
 

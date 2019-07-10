@@ -7,9 +7,9 @@ import org.bukkit.block.Block;
 
 public class FlameCrown implements Runnable {
 
-    private final int points = 15;
-    private final double radius = 0.5d;
-    private final Block block;
+    private int points = 15;
+    private double radius = 0.5d;
+    private Block block;
 
     public FlameCrown(Block block) {
         this.block = block;

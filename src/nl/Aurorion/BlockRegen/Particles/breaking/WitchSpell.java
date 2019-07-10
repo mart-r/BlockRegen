@@ -7,9 +7,9 @@ import org.bukkit.block.Block;
 
 public class WitchSpell implements Runnable {
 
-    private final int points = 40;
-    private final double radius = 0.5d;
-    private final Block block;
+    private int points = 40;
+    private double radius = 0.5d;
+    private Block block;
 
     public WitchSpell(Block block) {
         this.block = block;

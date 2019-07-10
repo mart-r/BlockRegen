@@ -27,6 +27,8 @@ public class Utils {
     // Regen processes, added on blockBreak, removed on regeneration
     public static List<RegenProcess> regenProcesses = new ArrayList<>();
 
+    public static HashMap<Location, Integer> regenTimesBlocks = new HashMap<>();
+
     // Firework colors
     public static List<Color> colors = new ArrayList<>();
 
@@ -44,16 +46,16 @@ public class Utils {
         return null;
     }
 
-    public static void addProcess(Location loc, BukkitTask task, Material material) {
-        regenProcesses.add(new RegenProcess(loc, task, material));
+    public static void addProcess(Location loc, BukkitTask task, Material material, byte blockData) {
+        regenProcesses.add(new RegenProcess(loc, task, material, blockData));
     }
 
     public static String locationToString(Location loc) {
-        return loc.getWorld().getName() + ";" + loc.getX() + ";" + loc.getY() + ";" + loc.getZ();
+        return (loc.getWorld().getName() + ";" + loc.getX() + ";" + loc.getY() + ";" + loc.getZ()).replace(".", ",");
     }
 
     public static Location stringToLocation(String str) {
-        String[] strar = str.split(";");
+        String[] strar = str.replace(",", ".").split(";");
         Location newLoc = new Location(Bukkit.getWorld(strar[0]), Double.valueOf(strar[1]).doubleValue(), Double.valueOf(strar[2]), Double.valueOf(strar[3]));
         return newLoc.clone();
     }
@@ -93,5 +95,7 @@ public class Utils {
         return ChatColor.translateAlternateColorCodes('&', msg);
     }
 
-    public static String removeColors(String str) {return ChatColor.stripColor(color(str));}
+    public static String removeColors(String str) {
+        return ChatColor.stripColor(color(str));
+    }
 }

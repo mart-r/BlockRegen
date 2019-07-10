@@ -51,6 +51,8 @@ public class EnchantUtil {
             enchantKeys.put("MENDING", Enchantment.MENDING);
             enchantKeys.put("FROST_WALKER", Enchantment.FROST_WALKER);
         }
+
+        Main.getInstance().cO.debug("Loaded enchants: " + enchantKeys.toString());
     }
 
     public Enchantment get(String str) {

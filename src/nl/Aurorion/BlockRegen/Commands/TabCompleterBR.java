@@ -11,9 +11,9 @@ import java.util.List;
 
 public class TabCompleterBR implements TabCompleter {
 
-    private final String[] subcommands = {"reload", "bypass", "check", "region", "events"};
-    private final String[] regionCommnads = {"set", "remove", "list"};
-    private final String[] eventCommands = {"activate", "deactivate"};
+    private String[] subcommands = {"reload", "bypass", "check", "region", "events"};
+    private String[] regionCommnads = {"set", "remove", "list"};
+    private String[] eventCommands = {"activate", "deactivate"};
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {

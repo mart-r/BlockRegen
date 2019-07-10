@@ -4,7 +4,7 @@ import nl.Aurorion.BlockRegen.Main;
 
 public class Getters {
 
-    private final Main main;
+    private Main main;
 
     public Getters(Main instance) {
         this.main = instance;

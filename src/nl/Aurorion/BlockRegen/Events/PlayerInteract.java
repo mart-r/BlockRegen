@@ -13,7 +13,7 @@ import org.bukkit.material.Crops;
 
 public class PlayerInteract implements Listener {
 
-    private final Main main;
+    private Main main;
 
     public PlayerInteract(Main instance) {
         this.main = instance;

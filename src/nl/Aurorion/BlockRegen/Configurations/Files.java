@@ -11,15 +11,17 @@ import org.bukkit.plugin.Plugin;
 
 public class Files {
 	
-	private final File sfile;
-    private final File mfile;
-    private final File bfile;
-    private final File rfile;
+	private File sfile;
+    private File mfile;
+    private File bfile;
+    private File rfile;
     private File dfile;
+    private File dataFile;
 	public FileConfiguration settings;
     public FileConfiguration messages;
     private FileConfiguration blocklist;
     private FileConfiguration regions;
+    private FileConfiguration recoveryData;
     private FileConfiguration data;
 	
 	public Files(Plugin plugin) {
@@ -28,6 +30,7 @@ public class Files {
 		mfile = new File(plugin.getDataFolder(), "Messages.yml");
 		bfile = new File(plugin.getDataFolder(), "Blocklist.yml");
 		rfile = new File(plugin.getDataFolder(), "Regions.yml");
+		dataFile = new File(plugin.getDataFolder(), "Data.yml");
 		
 		if(!sfile.exists()){
 			sfile.getParentFile().mkdirs();
@@ -52,6 +55,17 @@ public class Files {
 			plugin.saveResource("Regions.yml", false);
 			plugin.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&3BlockRegen&6] &aCreated Regions.yml"));
 		}
+
+		if(!dataFile.exists()){
+			dataFile.getParentFile().mkdirs();
+			try {
+				dataFile.createNewFile();
+			} catch (IOException e) {
+				Bukkit.getServer().getLogger().severe("[BlockRegen] Could not save Data.yml!");
+				e.printStackTrace();
+			}
+			plugin.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&3BlockRegen&6] &aCreated Data.yml"));
+		}
 		
 		settings = YamlConfiguration.loadConfiguration(sfile);
 		plugin.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&3BlockRegen&6] &aLoaded Settings.yml"));
@@ -61,6 +75,8 @@ public class Files {
 		plugin.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&3BlockRegen&6] &aLoaded Blocklist.yml"));
 		regions = YamlConfiguration.loadConfiguration(rfile);
 		plugin.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&3BlockRegen&6] &aLoaded Regions.yml"));
+		data = YamlConfiguration.loadConfiguration(dataFile);
+		plugin.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&3BlockRegen&6] &aLoaded Data.yml"));
 		
 		generateRecoveryFile(plugin);
 	}
@@ -75,7 +91,7 @@ public class Files {
 				plugin.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&3BlockRegen&6] &aCreated Recovery.yml"));
 			}
 
-			data = YamlConfiguration.loadConfiguration(dfile);
+			recoveryData = YamlConfiguration.loadConfiguration(dfile);
 			plugin.getServer().getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&3BlockRegen&6] &aLoaded Recovery.yml"));
 		}
 	}
@@ -152,13 +168,13 @@ public class Files {
 		}
 	}
 	
-	public FileConfiguration getData(){
-		return data;
+	public FileConfiguration getRecoveryData(){
+		return recoveryData;
 	}
 	
-	public void saveData() {
+	public void saveRecoveryData() {
 		try {
-			data.save(dfile);
+			recoveryData.save(dfile);
 		}
 		catch (IOException e) {
 			Bukkit.getServer().getLogger().severe("[BlockRegen] Could not save Recovery.yml!");
@@ -166,4 +182,16 @@ public class Files {
 		}
 	}
 
+	public FileConfiguration getData() {
+		return data;
+	}
+
+	public void saveData() {
+		try {
+			data.save(dataFile);
+		} catch (IOException e) {
+			Bukkit.getServer().getLogger().severe("[BlockRegen] Could not save Data.yml!");
+			e.printStackTrace();
+		}
+	}
 }

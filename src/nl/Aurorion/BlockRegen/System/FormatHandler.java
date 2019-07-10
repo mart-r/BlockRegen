@@ -13,14 +13,12 @@ import java.util.Set;
 
 public class FormatHandler {
 
-    private final Main main;
+    private Main main;
 
     // MATERIAL, BLOCK DATA
     private HashMap<String, BlockBR> blocks;
 
     private FileConfiguration blocklist;
-
-    // Todo add check for valid enchantments
 
     public FormatHandler(Main main) {
         this.main = main;
@@ -63,13 +61,41 @@ public class FormatHandler {
                 main.cO.debug("Loaded " + name);
             }
         }
+
         main.cO.info("Loaded " + blocks.size() + " block format(s) and " + Utils.events.size() + " event(s).");
+
+        for (BlockBR blockBR : blocks.values())
+            if (blockBR.getRegenTimes() > 0) {
+                main.useRegenTimes(true);
+                break;
+            }
     }
 
     private BlockBR loadBlock(String name) {
         ConfigurationSection section = blocklist.getConfigurationSection("Blocks." + name);
 
         BlockBR block = new BlockBR(name, section.getString("replace-block"));
+
+        // Block data
+
+        if (name.contains(";"))
+            try {
+                byte data = Byte.valueOf(name.split(";")[1]);
+                block.setBlockData(data);
+                main.cO.debug(name + ": Data: " + data);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        if (section.getString("replace-block").contains(";"))
+            try {
+                byte data = Byte.valueOf(section.getString("replace-block").split(";")[1]);
+                block.setReplaceBlockData(data);
+                main.cO.debug(name + ": Replace Block Data: " + data);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
 
         if (block.isValid()) {
             main.cO.debug(name + ": Valid");
@@ -78,30 +104,33 @@ public class FormatHandler {
 
             // Regenerate
             block.setRegenerate(section.getBoolean("regenerate", true));
-            main.cO.debug(name + ": " + block.isRegenerate());
+            main.cO.debug(name + ": isRegenerate " + block.isRegenerate());
 
             // Not needed, 0 by default
             block.setRegenDelay(section.getInt("regen-delay", 3));
-            main.cO.debug(name + ": " + block.getRegenDelay());
+            main.cO.debug(name + ": regenDelay " + block.getRegenDelay());
 
             // false by default
             block.setNaturalBreak(section.getBoolean("natural-break", false));
-            main.cO.debug(name + ": " + block.isNaturalBreak());
+            main.cO.debug(name + ": isNaturalBreak " + block.isNaturalBreak());
 
             // If null, simply won't work, no need to check
             block.setParticle(section.getString("particles"));
-            main.cO.debug(name + ": " + block.getParticle());
+            main.cO.debug(name + ": particle " + block.getParticle());
+
+            block.setRegenTimes(section.getInt("regen-times", 0));
+            main.cO.debug(name + ": regenTimes " + block.getRegenTimes());
 
             // Rewards
 
             block.setConsoleCommands(getStringOrList(name, "console-commands", "console-command"));
-            main.cO.debug(name + ": " + block.getConsoleCommands().toString());
+            main.cO.debug(name + ": consoleCommands " + block.getConsoleCommands().toString());
 
             block.setPlayerCommands(getStringOrList(name, "player-commands", "player-command"));
-            main.cO.debug(name + ": " + block.getPlayerCommands().toString());
+            main.cO.debug(name + ": playerCommands " + block.getPlayerCommands().toString());
 
             block.setMoney(loadAmount(section.getCurrentPath() + ".money"));
-            main.cO.debug(name + ": " + block.getMoney().toString());
+            main.cO.debug(name + ": money " + block.getMoney().toString());
 
             // Decide if single or multiple format
             // Support both drop-item(s)
@@ -134,15 +163,15 @@ public class FormatHandler {
 
                 } else {
                     // New format, look for multiples
-                    main.cO.debug("Looking for new multiple drops format..");
+                    main.cO.debug("Looking for multiple drops format..");
                     for (String id : dropSection.getKeys(false)) {
 
                         Drop drop = loadDrop("Blocks." + name + "." + path + "." + id);
-                        drop.setId(id);
 
-                        if (drop != null)
+                        if (drop != null) {
+                            drop.setId(id);
                             drops.add(drop);
-                        else
+                        } else
                             main.cO.debug("Drop not valid, skipping");
                     }
 
@@ -157,22 +186,20 @@ public class FormatHandler {
             // Conditions
 
             block.setToolsRequired(Utils.stringToList(section.getString("tool-required")));
-            main.cO.debug(name + ": " + block.getToolsRequired().toString());
+            main.cO.debug(name + ": toolsRequired " + block.getToolsRequired().toString());
 
             block.setEnchantsRequired(Utils.stringToList(section.getString("enchant-required")));
-            main.cO.debug(name + ": " + block.getEnchantsRequired().toString());
+            main.cO.debug(name + ": enchantsRequired " + block.getEnchantsRequired().toString());
 
             if (section.contains("jobs-check")) {
                 block.setJobRequirement(new JobRequirement(section.getString("jobs-check").split(";")[0], Integer.valueOf(section.getString("jobs-check").split(";")[1])));
-                main.cO.debug(name + ": " + block.getJobRequirement().getJob() + " - " + block.getJobRequirement().getLevel());
+                main.cO.debug(name + ": jobsRequired " + block.getJobRequirement().getJob() + " - " + block.getJobRequirement().getLevel());
             }
 
             // Events
 
-            if (section.contains("event")) {
+            if (section.contains("event"))
                 block.setEvent(loadEvent(section.getCurrentPath() + ".event"));
-                main.cO.debug("Event loaded.");
-            }
 
             return block;
         }
@@ -183,18 +210,31 @@ public class FormatHandler {
     private Drop loadDrop(String path) {
         ConfigurationSection dropSection = blocklist.getConfigurationSection(path);
 
+        main.cO.debug("Drop path: " + path);
+
         Drop drop = new Drop(dropSection.getString("material"));
+
+        // Handled with null
 
         if (!drop.isValid())
             return null;
 
-        main.cO.debug("" + drop.getMaterial().toString());
+        main.cO.debug(drop.getMaterial().toString());
+
+        if (dropSection.getString("material").contains(";"))
+            try {
+                byte data = Byte.valueOf(dropSection.getString("material").split(";")[1]);
+                drop.setData(data);
+                main.cO.debug("Drop Data: " + data);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
         drop.setDisplayName(dropSection.getString("name"));
-        main.cO.debug("" + drop.getDisplayName());
+        main.cO.debug("displayName " + drop.getDisplayName());
 
         drop.setLore(dropSection.getStringList("lores"));
-        main.cO.debug("" + drop.getLore().toString());
+        main.cO.debug("Lore " + drop.getLore().toString());
 
         if (!dropSection.contains("amount"))
             drop.setAmount(new Amount(1));
@@ -202,10 +242,9 @@ public class FormatHandler {
             drop.setAmount(loadAmount(dropSection.getCurrentPath() + ".amount"));
 
         drop.setDropNaturally(dropSection.getBoolean("drop-naturally", true));
-        main.cO.debug("" + drop.isDropNaturally());
+        main.cO.debug("isDropNaturally " + drop.isDropNaturally());
 
         if (dropSection.contains("exp")) {
-            main.cO.debug("Loading exp..");
             drop.setDropExpNaturally(dropSection.getBoolean("exp.drop-naturally", false));
 
             if (!dropSection.contains("exp.amount"))
@@ -213,6 +252,7 @@ public class FormatHandler {
             else
                 drop.setExpAmount(loadAmount(dropSection.getCurrentPath() + ".exp.amount"));
         } else drop.setExpAmount(new Amount(0));
+        main.cO.debug("Exp " + drop.getExpAmount().toString());
 
         return drop;
     }
@@ -227,7 +267,6 @@ public class FormatHandler {
         try {
             if (section.contains("high") && section.contains("low")) {
                 // Random amount
-                main.cO.debug("Loading random amount..");
 
                 try {
                     amount = new Amount(section.getInt("low"), section.getInt("high"));
@@ -235,8 +274,6 @@ public class FormatHandler {
                     main.cO.err("Amount on path " + path + " is not valid, returning default.");
                     return new Amount(1);
                 }
-
-                main.cO.debug("From " + amount.low() + " to " + amount.high());
             }
         } catch (NullPointerException e) {
             // Fixed
@@ -248,6 +285,7 @@ public class FormatHandler {
             }
         }
 
+        main.cO.debug("Amount " + amount.toString());
         return amount;
     }
 

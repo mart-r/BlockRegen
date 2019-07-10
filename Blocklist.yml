@@ -6,9 +6,13 @@
 
 Blocks:
   DIAMOND_ORE:
-    replace-block: PODZOL
+    replace-block: STONE
     regen-delay: 3
     money: 100
+    # Set to 0 to disabled
+    # Number of times you can break the block until it won't regen. Requested by @ryandawn#0745
+    regen-times: 5
+    regenerate: true
     console-command: 'say The console-command function is working!'
     player-command: 'me I, %player%, executed this command'
     tool-required: 'DIAMOND_PICKAXE, IRON_PICKAXE'
@@ -16,7 +20,7 @@ Blocks:
     particles: flame_crown
     natural-break: false
     drop-item:
-      material: DIORITE
+      material: STONE;2
       name: '&6&l[&3BlockRegen&6&l]'
       lores:
         - '&fThese are some lores'
@@ -44,11 +48,11 @@ Blocks:
           - '&eBling bling bling'
         drop-naturally: false
         rarity: 50
-  SPRUCE_LOG:
+  LOG;1:
     replace-block: BEDROCK
     regen-delay: 3
     money: 5
-    console-command: 'say %player% is a badass lumberjack..'
+    console-command: 'say %player_name% is a badass lumberjack..'
     natural-break: false
     drop-items:
       material: APPLE
@@ -90,7 +94,7 @@ Blocks:
       - 'say %vault_prefix% %player_name% Mined a block, wow.'
     player-commands: 'me Wooohooo!'
     enchant-required: 'FORTUNE, UNBREAKING;2'
-    tool-required: GOLDEN_PICKAXE
+    tool-required: GOLD_PICKAXE
     jobs-check: Farmer;2
     natural-break: false
     drop-items:
@@ -116,4 +120,29 @@ Blocks:
       double-drops: true
       bossbar:
         color: RED
+        title: '&7Event %event% &7is active!'
+  LOG;0:
+    replace-block: LOG;1
+    regen-delay: 10
+    enchant-required: 'UNBREAKING;3'
+    tool-required: DIAMOND_AXE
+    natural-break: false
+    drop-items:
+      wood:
+        material: LOG;2
+        name: '&6Log'
+        lores:
+          - '&7Proudly produced & distributed by &6%player_name%'
+        drop-naturally: false
+        amount: 1
+      apple:
+        material: APPLE
+        amount:
+          low: 0
+          high: 1
+    event:
+      event-name: '&6Timber mania'
+      double-drops: true
+      bossbar:
+        color: YELLOW
         title: '&7Event %event% &7is active!'

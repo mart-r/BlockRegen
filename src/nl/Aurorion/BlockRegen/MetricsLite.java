@@ -44,10 +44,10 @@ class MetricsLite {
     }
 
     // The version of this bStats class
-    private static final int B_STATS_VERSION = 1;
+    private static int B_STATS_VERSION = 1;
 
     // The url to which the data is sent
-    private static final String URL = "https://bStats.org/submitData/bukkit";
+    private static String URL = "https://bStats.org/submitData/bukkit";
 
     // Is bStats enabled on this server?
     private boolean enabled;
@@ -65,7 +65,7 @@ class MetricsLite {
     private static String serverUUID;
 
     // The plugin
-    private final Plugin plugin;
+    private Plugin plugin;
 
     /**
      * Class constructor.

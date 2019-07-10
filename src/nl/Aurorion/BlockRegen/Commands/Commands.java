@@ -26,9 +26,9 @@ import java.util.Set;
 
 public class Commands implements CommandExecutor, Listener {
 
-    private final Main main;
+    private Main main;
 
-    // Todo rework, add TabCompleter?
+    // Todo rework, copy from 1.13.2
 
     public Commands(Main main) {
         this.main = main;
@@ -36,9 +36,6 @@ public class Commands implements CommandExecutor, Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-
-        sender.sendMessage("ITEM DATA: " + ((Player) sender).getItemInHand().getDurability());
-
         if (cmd.getName().equalsIgnoreCase("blockregen")) {
             if (args.length == 0) {
                 sender.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6&m-----&r &3&lBlockRegen &6&m-----"
