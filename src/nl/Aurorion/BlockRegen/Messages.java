@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 public class Messages {
 
+    //                 MESSAGE_ID, MESSAGE_CONTENT
     private static HashMap<String, String> messages;
 
     public static String get(String name) {

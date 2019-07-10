@@ -126,63 +126,92 @@ Blocks:
     # Should the plugin regen the block? Yeah, it's actually usefull.
     # Defaults to true, you can remove it peacefully.
     regenerate: true
-      # Defaults to 3 seconds when missing
-      regen-delay: 3
-      # Can be defined by random/fixed amount.
-      money:
-        low: 100
-        high: 1000
-      # Supports PAPI placeholders!
-      # Works with console-commands also.
-      console-command:
-        - 'say %vault_prefix% %player_name% Mined a block, wow.'
-      # Yeah, this works too.
-      player-commands: 'me Wooohooo!'
-      # Now works with minimum level of an enchant, just like jobs.
-      # Enchant;level
-      enchant-required: FORTUNE, UNBREAKING;2
-      # No changes here.
-      tool-required: GOLDEN_PICKAXE
-      # No changes, also.
-      jobs-check: Farmer;2
-      # Defaults to false when missing.
-      natural-break: false
-      # drop-item(s), both works.
-      drop-items:
-        # need a name to seperate them.
-        pure_gold:
-          # From now on works like before.
-          # Need at least material to work.
-          material: GOLD_NUGGET
-          # Supports PAPI placeholders!
-          name: '&6Pure gold nugget'
-          lores:
-            - '&7Mined by %player_name%'
+    # Defaults to 3 seconds when missing
+    regen-delay: 3
+    # Can be defined by random/fixed amount.
+    money:
+      low: 100
+      high: 1000
+    # Supports PAPI placeholders!
+    # Works with console-commands also.
+    console-command:
+      - 'say %vault_prefix% %player_name% Mined a block, wow.'
+    # Yeah, this works too.
+    player-commands: 'me Wooohooo!'
+    # Now works with minimum level of an enchant, just like jobs.
+    # Enchant;level
+    enchant-required: LOOT_BONUS_BLOCKS, DURABILITY;2
+    # No changes here.
+    tool-required: GOLDEN_PICKAXE
+    # No changes, also.
+    jobs-check: Farmer;2
+    # Defaults to false when missing.
+    natural-break: false
+    # drop-item(s), both works.
+    drop-items:
+      # need a name to seperate them.
+      pure_gold:
+        # From now on works like before.
+        # Need at least material to work.
+        material: GOLD_NUGGET
+        # Supports PAPI placeholders!
+        name: '&6Pure gold nugget'
+        lores:
+          - '&7Mined by %player_name%'
+        drop-naturally: false
+        exp:
           drop-naturally: false
-          exp:
-            drop-naturally: false
-            # Amounts now support fixed or random amount.
-            # random == high and low
-            # fixed == just a number
-            amount:
-              low: 0
-              high: 1
+          # Amounts now support fixed or random amount.
+          # random == high and low
+          # fixed == just a number
           amount:
             low: 0
-            high: 2
+            high: 1
         boulder:
           material: STONE
           # Fixed amount
           amount: 1
-      # No changes in events.
-      event:
-        # Only the name is needed in order for the event to work.
-        event-name: '&6Gold fever'
-        double-drops: true
-        # Bossbar can now be fully removed.
-        # Color defaults to Yellow, title to 'Event ... is active'
-        # (if both are absent, bossbar won't be used)
-        # You can use %event% placeholder to get the colored name.
-        bossbar:
-          color: RED
-          title: '&7Event %event% &7is active!'
+    # No changes in events.
+    event:
+      # Only the name is needed in order for the event to work.
+      event-name: '&6Gold fever'
+      double-drops: true
+      # Bossbar can now be fully removed.
+      # Color defaults to Yellow, title to 'Event ... is active'
+      # (if both are absent, bossbar won't be used)
+      # You can use %event% placeholder to get the colored name.
+      bossbar:
+        color: RED
+        title: '&7Event %event% &7is active!'
+  EMERALD_BLOCK:
+    replace-block: STONE
+    regen-delay: 60
+    # Number of times the block will be regenerated, it will just leave the replace block there once finished.
+    regen-times: 4
+    permission: emerald.god
+    # Message sent to all players currently on the server
+    broadcast-message:
+    - '&7&m---&r &6! &aBR &6! &7&m----&r'
+    - '&7%player_name% just mined the mighty block!'
+    - "&7It's going to respawn in &a%regenDelay%&7s!"
+    - '&7Respawns left: &a%regenTimesActual%&7/&2%regenTimesMax%'
+    - '&7&m---&r &6! &aBR &6! &7&m----&r'
+    # Message sent to the player
+    inform-message: '&6! &aBR &7Congrats you mined a block!'
+    # Actions fired when the block regenerates.
+    on-regen:
+      # Options: console-commands, inform-message, broadcast-message
+      inform-message: "&7Remember the block you mined a few secs before? It's back tho!"
+      broadcast-message:
+      - '&7&m---&r &6! &aBR &6! &7&m----&r'
+      - '&7The almighty block is back.'
+      - '&7&m---&r &6! &aBR &6! &7&m----&r'
+    drop-items:
+      special_emerald:
+        material: emerald
+        name: '&aSpecial Emerald'
+        # When there are more items, prevents double-drops/double-exp from taking effect.
+        apply-events: false
+        lore:
+        - "&7It's special, because &a%player_name% &7mined it ;)"
+        amount: 1

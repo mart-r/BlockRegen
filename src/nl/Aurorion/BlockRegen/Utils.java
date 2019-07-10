@@ -1,8 +1,11 @@
 package nl.Aurorion.BlockRegen;
 
+import me.clip.placeholderapi.PlaceholderAPI;
+import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
 import nl.Aurorion.BlockRegen.System.RegenProcess;
 import org.bukkit.*;
 import org.bukkit.boss.BossBar;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
@@ -27,6 +30,8 @@ public class Utils {
     // Regen processes, added on blockBreak, removed on regeneration
     public static List<RegenProcess> regenProcesses = new ArrayList<>();
 
+    public static HashMap<Location, Integer> regenTimesBlocks = new HashMap<>();
+
     // Firework colors
     public static List<Color> colors = new ArrayList<>();
 
@@ -42,6 +47,19 @@ public class Utils {
         }
 
         return null;
+    }
+
+    public static String mapToString(HashMap<?, ?> map, String splitter, String seperator, String ifEmpty) {
+        String str = ifEmpty;
+
+        if (!map.isEmpty()) {
+            str = "";
+            for (Object key : map.keySet()) {
+                str += key.toString() + seperator + map.get(key).toString() + splitter;
+            }
+        }
+
+        return str;
     }
 
     public static void addProcess(Location loc, BukkitTask task, Material material) {
@@ -95,5 +113,29 @@ public class Utils {
 
     public static String removeColors(String str) {
         return ChatColor.stripColor(color(str));
+    }
+
+    public static String parse(String str, Player p, BlockBR blockBR, String actualRegenTimes) {
+
+        str = str.replace("%regenDelay%", String.valueOf(blockBR.getRegenDelay()));
+        str = str.replace("%regenTimesMax%", String.valueOf(blockBR.getRegenTimes()));
+        str = str.replace("%regenTimesActual%", String.valueOf(actualRegenTimes));
+
+        return parse(str, p);
+    }
+
+    public static String parse(String str, Player p) {
+        str = str.replace("%player%", p.getName());
+        if (Main.getInstance().isPlaceholderAPI())
+            str = PlaceholderAPI.setPlaceholders(p, str);
+        return str;
+    }
+
+    public static String parseAndColor(String str, Player p) {
+        return color(parse(str, p));
+    }
+
+    public static String parseAndColor(String str, Player p, BlockBR blockBR, String actualRegenTimes) {
+        return color(parse(str, p, blockBR, actualRegenTimes));
     }
 }

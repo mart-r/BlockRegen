@@ -1,9 +1,11 @@
 package nl.Aurorion.BlockRegen.System;
 
-import nl.Aurorion.BlockRegen.BlockFormat.*;
+import nl.Aurorion.BlockRegen.BlockFormat.Amount;
+import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
+import nl.Aurorion.BlockRegen.BlockFormat.Drop;
+import nl.Aurorion.BlockRegen.BlockFormat.EventBR;
 import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Utils;
-import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -66,36 +68,56 @@ public class FormatHandler {
         BlockBR block = new BlockBR(name, section.getString("replace-block"));
 
         if (block.isValid()) {
-            main.cO.debug(name + ": Valid");
+            main.cO.debug(name + " Valid");
 
             // Misc info
 
             // Regenerate
             block.setRegenerate(section.getBoolean("regenerate", true));
-            main.cO.debug(name + ": " + block.isRegenerate());
+            main.cO.debug(name + " isRegenerate " + block.isRegenerate());
 
             // Not needed, 0 by default
             block.setRegenDelay(section.getInt("regen-delay", 3));
-            main.cO.debug(name + ": " + block.getRegenDelay());
+            main.cO.debug(name + " regenDelay " + block.getRegenDelay());
 
             // false by default
             block.setNaturalBreak(section.getBoolean("natural-break", false));
-            main.cO.debug(name + ": " + block.isNaturalBreak());
+            main.cO.debug(name + " isNaturalBreak " + block.isNaturalBreak());
 
             // If null, simply won't work, no need to check
             block.setParticle(section.getString("particles"));
-            main.cO.debug(name + ": " + block.getParticle());
+            main.cO.debug(name + " particle " + block.getParticle());
+
+            // Number of times the block will regenerate
+            block.setRegenTimes(section.getInt("regen-times", 0));
+            main.cO.debug(name + " regenTimes " + block.getRegenTimes());
 
             // Rewards
 
             block.setConsoleCommands(getStringOrList(name, "console-commands", "console-command"));
-            main.cO.debug(name + ": " + block.getConsoleCommands().toString());
+            main.cO.debug(name + " consoleCommands " + block.getConsoleCommands().toString());
 
             block.setPlayerCommands(getStringOrList(name, "player-commands", "player-command"));
-            main.cO.debug(name + ": " + block.getPlayerCommands().toString());
+            main.cO.debug(name + " playerCommands " + block.getPlayerCommands().toString());
 
-            block.setMoney(loadAmount(section.getCurrentPath() + ".money"));
-            main.cO.debug(name + ": " + block.getMoney().toString());
+            block.setBroadcastMessage(getStringOrList(name, "broadcast-message", "broadcast-message"));
+            main.cO.debug(name + " broadcastMessage " + block.getBroadcastMessage());
+
+            block.setInformMessage(getStringOrList(name, "inform-message", "inform-message"));
+            main.cO.debug(name + " informMessage " + block.getInformMessage());
+
+            // On-regen actions
+
+            if (section.contains("on-regen")) {
+                block.setOnRegenConsoleCommands(getStringOrList(name + ".on-regen", "console-commands", "console-command"));
+
+                block.setOnRegenBroadcastMessage(getStringOrList(name + ".on-regen", "broadcast-message", "broadcast-message"));
+
+                block.setOnRegenInformMessage(getStringOrList(name + ".on-regen", "inform-message", "inform-message"));
+            }
+
+            block.setMoney(loadAmount(section.getCurrentPath() + ".money", 0));
+            main.cO.debug(name + " money " + block.getMoney().toString());
 
             // Decide if single or multiple format
             // Support both drop-item(s)
@@ -118,17 +140,17 @@ public class FormatHandler {
                     main.cO.debug("Loading a legacy drop..");
 
                     Drop drop = loadDrop("Blocks." + name + "." + path);
-                    drop.setId("legacy");
 
                     if (drop != null) {
+                        drop.setId("legacy");
                         drops.add(drop);
                         block.setDrops(drops);
                     } else
-                        main.cO.debug("Legacy drop not valid");
+                        main.cO.debug("Drop not valid");
 
                 } else {
                     // New format, look for multiples
-                    main.cO.debug("Looking for new multiple drops format..");
+                    main.cO.debug("Looking for multiple drops format..");
                     for (String id : dropSection.getKeys(false)) {
 
                         Drop drop = loadDrop("Blocks." + name + "." + path + "." + id);
@@ -151,24 +173,22 @@ public class FormatHandler {
             // Conditions
 
             block.setToolsRequired(Utils.stringToList(section.getString("tool-required")));
-            main.cO.debug(name + ": " + block.getToolsRequired().toString());
+            main.cO.debug(name + " toolsRequired " + block.getToolsRequired().toString());
+
+            block.setPermission(section.getString("permission", ""));
+            main.cO.debug(name + " permission " + block.getPermission());
 
             // Enchants
 
             block.setEnchantsRequired(Utils.stringToList(section.getString("enchant-required")));
-            main.cO.debug(name + ": " + block.getEnchantsRequired().toString());
+            main.cO.debug(name + " enchantsRequired " + block.getEnchantsRequired().toString());
 
-            if (section.contains("jobs-check")) {
-                block.setJobRequirement(new JobRequirement(section.getString("jobs-check").split(";")[0], Integer.valueOf(section.getString("jobs-check").split(";")[1])));
-                main.cO.debug(name + ": " + block.getJobRequirement().getJob() + " - " + block.getJobRequirement().getLevel());
-            }
+            if (section.contains("jobs-check") && main.getJobs())
+                block.setJobRequirements(Utils.stringToList(section.getString("jobs-check")));
 
             // Events
-
-            if (section.contains("event")) {
+            if (section.contains("event"))
                 block.setEvent(loadEvent(section.getCurrentPath() + ".event"));
-                main.cO.debug("Event loaded.");
-            }
 
             return block;
         }
@@ -184,63 +204,65 @@ public class FormatHandler {
         if (!drop.isValid())
             return null;
 
-        main.cO.debug("" + drop.getMaterial().toString());
+        main.cO.debug("Loading drop on path '" + path + "'");
+
+        main.cO.debug("material " + drop.getMaterial().toString());
 
         drop.setDisplayName(dropSection.getString("name"));
-        main.cO.debug("" + drop.getDisplayName());
+        main.cO.debug("displayName " + drop.getDisplayName());
+
+        drop.setApplyEvents(dropSection.getBoolean("apply-events", true));
+        main.cO.debug("applyEvents " + drop.isApplyEvents());
 
         drop.setLore(dropSection.getStringList("lores"));
-        main.cO.debug("" + drop.getLore().toString());
+        main.cO.debug("lore " + drop.getLore().toString());
 
         if (!dropSection.contains("amount"))
             drop.setAmount(new Amount(1));
         else
-            drop.setAmount(loadAmount(dropSection.getCurrentPath() + ".amount"));
+            drop.setAmount(loadAmount(dropSection.getCurrentPath() + ".amount", 1));
 
         drop.setDropNaturally(dropSection.getBoolean("drop-naturally", true));
-        main.cO.debug("" + drop.isDropNaturally());
+        main.cO.debug("dropNaturally " + drop.isDropNaturally());
 
         if (dropSection.contains("exp")) {
-            main.cO.debug("Loading exp..");
             drop.setDropExpNaturally(dropSection.getBoolean("exp.drop-naturally", false));
 
             if (!dropSection.contains("exp.amount"))
                 drop.setExpAmount(new Amount(1));
             else
-                drop.setExpAmount(loadAmount(dropSection.getCurrentPath() + ".exp.amount"));
+                drop.setExpAmount(loadAmount(dropSection.getCurrentPath() + ".exp.amount", 1));
         } else drop.setExpAmount(new Amount(0));
 
         return drop;
     }
 
-    private Amount loadAmount(String path) {
+    private Amount loadAmount(String path, int defaultValue) {
 
         ConfigurationSection section = blocklist.getConfigurationSection(path);
 
-        Amount amount = new Amount(1);
+        Amount amount = new Amount(defaultValue);
 
         // Fixed or not?
         try {
             if (section.contains("high") && section.contains("low")) {
                 // Random amount
-                main.cO.debug("Loading random amount..");
-
                 try {
                     amount = new Amount(section.getInt("low"), section.getInt("high"));
                 } catch (NullPointerException e) {
-                    main.cO.err("Amount on path " + path + " is not valid, returning default.");
-                    return new Amount(1);
+                    main.cO.warn("Amount on path " + path + " is not valid, returning default.");
+                    return new Amount(defaultValue);
                 }
 
-                main.cO.debug("From " + amount.low() + " to " + amount.high());
+                main.cO.debug(amount.toString());
             }
         } catch (NullPointerException e) {
             // Fixed
             try {
                 amount = new Amount(blocklist.getInt(path));
             } catch (NullPointerException e1) {
-                main.cO.err("Amount on path " + path + " is not valid, returning default.");
-                return new Amount(1);
+                main.cO.warn("Amount on path " + path + " is not valid, returning default.");
+                return new Amount(defaultValue);
             }
         }
 
@@ -299,7 +321,7 @@ public class FormatHandler {
             path += "." + parameter1;
         else if (main.getFiles().getBlocklist().getConfigurationSection(path).contains(parameter2))
             path += "." + parameter2;
-        else return null;
+        else return list;
 
         if (!main.getFiles().getBlocklist().getStringList(path).isEmpty())
             list = main.getFiles().getBlocklist().getStringList(path);

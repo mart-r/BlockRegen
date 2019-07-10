@@ -16,6 +16,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.boss.BossBar;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -39,22 +40,36 @@ public class Main extends JavaPlugin {
     public WorldEditPlugin worldEdit;
     public GriefPrevention griefPrevention;
 
-    private Files files;
-
     private ParticleUtil particleUtil;
-    private Getters getters;
-
-    private Random random;
-
-    // Handles every output going to console, easier, more centralized control.
-    public ConsoleOutput cO;
+    private EnchantUtil enchantUtil;
 
     // Has all the information from Blocklist.yml loaded on startup
     private FormatHandler formatHandler;
 
+    // Handles every output going to console, easier, more centralized control.
+    public ConsoleOutput cO;
+
+    private Files files;
+
     public String newVersion = null;
 
     private boolean placeholderAPI = false;
+
+    private Random random;
+
+    private boolean useGP;
+    private boolean updateChecker;
+    private boolean useTowny;
+    private boolean dataRecovery;
+
+    private void loadOptions() {
+        useGP = files.getSettings().getBoolean("GriefPrevention-Support");
+        if (files.getSettings().get("Update-Checker") != null)
+            updateChecker =  files.getSettings().getBoolean("Update-Checker");
+        else updateChecker = false;
+        dataRecovery = files.getSettings().getBoolean("Data-Recovery");
+        useTowny = files.getSettings().getBoolean("Towny-Support");
+    }
 
     public boolean isPlaceholderAPI() {
         return placeholderAPI;
@@ -66,10 +81,14 @@ public class Main extends JavaPlugin {
 
         registerClasses(); // Also generates files
 
+        loadOptions();
+
         // Setup ConsoleOutput
         cO = new ConsoleOutput(this);
         cO.setDebug(files.settings.getBoolean("Debug-Enabled", false));
         cO.setPrefix(Utils.color(files.messages.getString("Messages.Prefix")));
+
+        enchantUtil = new EnchantUtil();
 
         formatHandler = new FormatHandler(this);
 
@@ -92,7 +111,7 @@ public class Main extends JavaPlugin {
 
         enableMetrics();
 
-        if (getGetters().updateChecker()) {
+        if (updateChecker) {
             getServer().getScheduler().runTaskLaterAsynchronously(this, () -> {
                 UpdateCheck updater = new UpdateCheck(this, 9885);
 
@@ -112,11 +131,47 @@ public class Main extends JavaPlugin {
         cO.info("Always backup if you are not sure about things.");
     }
 
+    public void reload(CommandSender sender) {
+        instance = this;
+
+        files.reload();
+        loadOptions();
+        sender.sendMessage("§7Reloaded files..");
+
+        // Setup ConsoleOutput
+        cO = new ConsoleOutput(this);
+        cO.setDebug(files.settings.getBoolean("Debug-Enabled", false));
+        cO.setPrefix(Utils.color(files.messages.getString("Messages.Prefix")));
+
+        Utils.bars.clear();
+        Utils.events.clear();
+
+        setupEconomy();
+        setupWorldEdit();
+        checkForPlugins();
+
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            sender.sendMessage("§eFound PAPI! §aHooking!");
+            placeholderAPI = true;
+        }
+
+        sender.sendMessage("§7Searched for dependencies..");
+
+        enchantUtil = new EnchantUtil();
+
+        Messages.load();
+
+        formatHandler.reload();
+        sender.sendMessage("§7Loaded formats..");
+
+        recoveryCheck();
+    }
+
     @Override
     public void onDisable() {
         getServer().getScheduler().cancelTasks(this);
 
-        if (!getGetters().dataRecovery() && !Utils.regenProcesses.isEmpty()) {
+        if (!dataRecovery && !Utils.regenProcesses.isEmpty()) {
             for (RegenProcess regenProcess : Utils.regenProcesses)
                 regenProcess.getLoc().getBlock().setType(regenProcess.getMaterial());
         }
@@ -130,7 +185,6 @@ public class Main extends JavaPlugin {
     private void registerClasses() {
         files = new Files(this);
         particleUtil = new ParticleUtil(this);
-        getters = new Getters(this);
         random = new Random();
     }
 
@@ -200,10 +254,14 @@ public class Main extends JavaPlugin {
     }
 
     public boolean getJobs() {
-        if (this.getServer().getPluginManager().getPlugin("Jobs") != null) {
+        if (getServer().getPluginManager().getPlugin("Jobs") != null) {
             return true;
         }
         return false;
+    }
+
+    public EnchantUtil getEnchantUtil() {
+        return enchantUtil;
     }
 
     public GriefPrevention getGriefPrevention() {
@@ -218,16 +276,12 @@ public class Main extends JavaPlugin {
         return this.particleUtil;
     }
 
-    public Getters getGetters() {
-        return this.getters;
-    }
-
     public Random getRandom() {
         return this.random;
     }
 
     public void recoveryCheck() {
-        if (getGetters().dataRecovery()) {
+        if (dataRecovery) {
             Set<String> set = files.getData().getKeys(false);
             if (!set.isEmpty()) {
                 cO.info("Recovering blocks..");
@@ -254,5 +308,21 @@ public class Main extends JavaPlugin {
 
     public FormatHandler getFormatHandler() {
         return formatHandler;
+    }
+
+    public boolean isUseGP() {
+        return useGP;
+    }
+
+    public boolean isUpdateChecker() {
+        return updateChecker;
+    }
+
+    public boolean isUseTowny() {
+        return useTowny;
+    }
+
+    public boolean isDataRecovery() {
+        return dataRecovery;
     }
 }

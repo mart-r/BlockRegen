@@ -6,7 +6,6 @@ import com.sk89q.worldedit.regions.CuboidRegion;
 import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
 import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Messages;
-import nl.Aurorion.BlockRegen.System.Getters;
 import nl.Aurorion.BlockRegen.Utils;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -64,13 +63,13 @@ public class BlockBreak implements Listener {
         }
 
         // Towny support
-        if (main.getGetters().useTowny())
+        if (main.isUseTowny())
             if (TownyUniverse.getTownBlock(block.getLocation()) != null)
                 if (TownyUniverse.getTownBlock(block.getLocation()).hasTown())
                     return;
 
         // GriefPrevention support
-        if (main.getGetters().useGP()) {
+        if (main.isUseGP()) {
             String noBuildReason = main.getGriefPrevention().allowBreak(player, block, block.getLocation(), event);
 
             if (noBuildReason != null)
@@ -152,7 +151,6 @@ public class BlockBreak implements Listener {
 
     private void blockBreak(Player player, Block block, String blockname, Integer exptodrop) {
 
-        Getters getters = main.getGetters();
         BlockState state = block.getState();
         Location loc = block.getLocation();
 
@@ -160,7 +158,7 @@ public class BlockBreak implements Listener {
 
         BlockBR blockBR = Main.getInstance().getFormatHandler().getBlockBR(blockname);
 
-        blockBR.reward(player, block, exptodrop);
+        blockBR.reward(player, block, exptodrop, loc);
 
         // Replacing the block ---------------------------------------------------------------------------------
         new BukkitRunnable() {
@@ -171,12 +169,29 @@ public class BlockBreak implements Listener {
         }.runTaskLater(main, 2l);
 
         if (blockBR.isRegenerate()) {
+
+            main.cO.debug(Utils.regenTimesBlocks.toString());
+
+            // Check for number of breaks
+            if (blockBR.getRegenTimes() > 0) {
+                if (Utils.regenTimesBlocks.containsKey(block.getLocation())) {
+                    if ((Utils.regenTimesBlocks.get(block.getLocation()) - 1) <= 0) {
+                        Utils.regenTimesBlocks.remove(block.getLocation());
+                        return;
+                    } else
+                        Utils.regenTimesBlocks.put(block.getLocation(), Utils.regenTimesBlocks.get(block.getLocation()) - 1);
+                } else
+                    Utils.regenTimesBlocks.put(block.getLocation(), blockBR.getRegenTimes() - 1);
+            }
+
+            main.cO.debug("Breaks left: " + Utils.regenTimesBlocks.get(block.getLocation()));
+
             // Actual Regeneration -------------------------------------------------------------------------------------
 
             // Data Recovery
             FileConfiguration data = main.getFiles().getData();
 
-            if (getters.dataRecovery()) {
+            if (main.isDataRecovery()) {
 
                 List<String> dataLocs = new ArrayList<>();
 
@@ -204,6 +219,8 @@ public class BlockBreak implements Listener {
                             main.getFiles().saveData();
                         }
                     }
+
+                    blockBR.onRegen(player, block.getLocation());
                 }
             }.runTaskLater(main, regendelay * 20);
 

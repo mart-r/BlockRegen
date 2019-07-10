@@ -19,8 +19,12 @@ public class Drop {
 
     private String displayName;
     private List<String> lore;
+
     private List<String> enchants;
     private List<String> flags;
+
+    // NBT UTILS NEEDED
+    private List<String> NBTData;
 
     // Muh.
     private boolean dropNaturally;
@@ -32,30 +36,47 @@ public class Drop {
 
     private Amount amount;
 
+    private boolean applyEvents;
+
     // Used when loading the block
     private boolean valid;
 
-    // Used only for debugging
+    // Used only for debugging, not even for that, lol.
     private String id;
 
     public void setId(String id) {
         this.id = id;
     }
 
-    public String getId() {
-        return id;
-    }
-
     public Drop(String material) {
         try {
             this.material = Material.valueOf(material.toUpperCase());
-        } catch (NullPointerException e) {
+        } catch (NullPointerException | IllegalArgumentException e) {
             Main.getInstance().cO.warn(material + " is not a valid Material, skipping the drop item..");
             valid = false;
             return;
         }
 
         valid = true;
+    }
+
+    public ItemStack getItemStack(Player player) {
+        ItemStack item = new ItemStack(material, amount.getAmount());
+
+        ItemMeta meta = item.getItemMeta();
+
+        if (Main.getInstance().isPlaceholderAPI()) {
+            meta.setDisplayName(Utils.color(PlaceholderAPI.setPlaceholders(player, displayName)));
+            for (String line : lore)
+                lore.set(lore.indexOf(line), PlaceholderAPI.setPlaceholders(player, line));
+        } else {
+            meta.setDisplayName(Utils.color(displayName));
+        }
+
+        meta.setLore(lore);
+
+        item.setItemMeta(meta);
+        return item;
     }
 
     public Material getMaterial() {
@@ -104,12 +125,16 @@ public class Drop {
         return expAmount;
     }
 
-    public void setExpAmount(Amount expAmount) {
-        this.expAmount = expAmount;
+    public boolean isApplyEvents() {
+        return applyEvents;
     }
 
-    public Amount getAmount() {
-        return amount;
+    public void setApplyEvents(boolean applyEvents) {
+        this.applyEvents = applyEvents;
+    }
+
+    public void setExpAmount(Amount expAmount) {
+        this.expAmount = expAmount;
     }
 
     public void setAmount(Amount amount) {
@@ -120,30 +145,7 @@ public class Drop {
         return valid;
     }
 
-    public void setValid(boolean valid) {
-        this.valid = valid;
-    }
-
     public String toString() {
         return material.toString() + ", " + displayName + ", " + lore.toString() + ", " + dropExpNaturally + ", " + dropExpNaturally + ", " + amount.toString();
-    }
-
-    public ItemStack getItemStack(Player player) {
-        ItemStack item = new ItemStack(material, amount.getAmount());
-
-        ItemMeta meta = item.getItemMeta();
-
-        if (Main.getInstance().isPlaceholderAPI()) {
-            meta.setDisplayName(Utils.color(PlaceholderAPI.setPlaceholders(player, displayName)));
-            for (String line : lore)
-                lore.set(lore.indexOf(line), PlaceholderAPI.setPlaceholders(player, line));
-        } else {
-            meta.setDisplayName(Utils.color(displayName));
-        }
-
-        meta.setLore(lore);
-
-        item.setItemMeta(meta);
-        return item;
     }
 }

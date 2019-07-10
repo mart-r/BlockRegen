@@ -158,4 +158,10 @@ public class Files {
 		}
 	}
 
+	public void reload() {
+		reloadBlocklist();
+		reloadMessages();
+		reloadSettings();
+		reloadRegions();
+	}
 }
