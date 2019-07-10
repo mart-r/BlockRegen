@@ -33,21 +33,21 @@ public class Commands implements CommandExecutor, Listener {
     }
 
     private void help(CommandSender s, String label) {
-        s.sendMessage("§8§m----§r §3BlockRegen §7v.§f" + main.getDescription().getVersion() + " §8§m----"
-                + "\n§3/" + label + " reload §7- §8Reload the Settings.yml, Messages.yml and Blocklist.yml, also generates Recovery.yml if needed."
-                + "\n§3/" + label + " bypass §7- §8Bypass the events."
-                + "\n§3/" + label + " check &7- §8Check the name + data of the block to put in the blocklist."
-                + "\n§3/" + label + " region &7- §8All the info to set a region."
-                + "\n§3/" + label + " events &7- §8Check all your events."
-                + "\n§8§m--------------------------");
+        s.sendMessage("§8§m        §r §3BlockRegen §7v.§f" + main.getDescription().getVersion() + " §8§m        "
+                + "\n§3/" + label + " reload §8- §7Reload the Settings.yml, Messages.yml and Blocklist.yml, also generates Recovery.yml if needed."
+                + "\n§3/" + label + " bypass §8- §7Bypass the events."
+                + "\n§3/" + label + " check §8- §7Check the name + data of the block to put in the blocklist."
+                + "\n§3/" + label + " region §8- §7All the info to set a region."
+                + "\n§3/" + label + " events §8- §7Check all your events."
+                + "\n§8§m                                                 §r");
     }
 
     private boolean isPlayer(CommandSender sender) {
         if (!(sender instanceof Player)) {
             sender.sendMessage(Messages.get("Console-Sender-Error"));
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     @Override
@@ -67,7 +67,7 @@ public class Commands implements CommandExecutor, Listener {
                 sender.sendMessage(Messages.get("Reload"));
                 break;
             case "bypass":
-                if (!isPlayer(sender))
+                if (isPlayer(sender))
                     return true;
 
                 player = (Player) sender;
@@ -81,7 +81,7 @@ public class Commands implements CommandExecutor, Listener {
                 }
                 break;
             case "check":
-                if (!isPlayer(sender))
+                if (isPlayer(sender))
                     return true;
 
                 player = (Player) sender;
@@ -101,10 +101,10 @@ public class Commands implements CommandExecutor, Listener {
                 break;
             case "convert":
                 convert();
-                sender.sendMessage(Messages.get("Prefix") + "§a§lConverted your regions to BlockRegen 3.4.0 compatibility!");
+                sender.sendMessage(Messages.get("Prefix") + "§aConverted your regions to BlockRegen 3.4.0 compatibility!");
                 break;
             case "region":
-                if (!isPlayer(sender))
+                if (isPlayer(sender))
                     return true;
 
                 player = (Player) sender;
@@ -122,24 +122,22 @@ public class Commands implements CommandExecutor, Listener {
                 // blockregen region set/remove/list
 
                 if (args.length < 2) {
-                    player.sendMessage("§cNot enough arguments. §7/blockregen region");
+                    player.sendMessage("§cNot enough arguments.");
+                    player.sendMessage("§8§m        §r §3BlockRegen §8§m        "
+                            + "\n&3/" + label + " region set <name> §8- §7set a region."
+                            + "\n&3/" + label + " region remove <name> §8- §7remove a region."
+                            + "\n&3/" + label + " region list §8- §7a list of all your regions."
+                            + "\n§8§m                                                 §r");
                     return true;
                 } else if (args.length == 2) {
                     if (args[1].equalsIgnoreCase("list")) {
 
-                        player.sendMessage("§8§m----&r &3BlockRegen Regions §8§m----\n");
+                        player.sendMessage("§8§m        §r §3BlockRegen Regions §8§m        \n");
                         if (!regionSet.isEmpty())
                             regionSet.forEach(loopRegion -> player.sendMessage("§8 - §7" + loopRegion));
                         else
                             player.sendMessage("§cThere are no regions set.");
-                        player.sendMessage("\n§8§m-----------------------");
-                        return true;
-                    } else {
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6&m-----&r &3&lBlockRegen &6&m-----"
-                                + "\n&3/" + label + "  region set <name> &7: set a region."
-                                + "\n&3/" + label + "  region remove <name> &7: remove a region."
-                                + "\n&3/" + label + "  region list &7: a list of all your regions."
-                                + "\n&6&m-----------------------"));
+                        player.sendMessage("\n§8§m                                                 §r");
                         return true;
                     }
                 } else if (args.length == 3) {
@@ -175,38 +173,41 @@ public class Commands implements CommandExecutor, Listener {
                                 player.sendMessage(Messages.get("Unknown-Region"));
                             break;
                         default:
-                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6&m-----&r &3&lBlockRegen &6&m-----"
-                                    + "\n&3/" + label + "  region set <name> &7: set a region."
-                                    + "\n&3/" + label + "  region remove <name> &7: remove a region."
-                                    + "\n&3/" + label + "  region list &7: a list of all your regions."
-                                    + "\n&6&m-----------------------"));
+                            player.sendMessage("§8§m        §r §3BlockRegen §8§m        "
+                                    + "\n&3/" + label + " region set <name> §8- §7set a region."
+                                    + "\n&3/" + label + " region remove <name> §8- §7remove a region."
+                                    + "\n&3/" + label + " region list §8- §7a list of all your regions."
+                                    + "\n§8§m                                                 §r");
                             break;
                     }
                 } else {
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6&m-----&r &3&lBlockRegen &6&m-----"
-                            + "\n&3/" + label + "  region set <name> &7: set a region."
-                            + "\n&3/" + label + "  region remove <name> &7: remove a region."
-                            + "\n&3/" + label + "  region list &7: a list of all your regions."
-                            + "\n&6&m-----------------------"));
+                    player.sendMessage("§cToo many arguments.");
+                    player.sendMessage("§8§m        §r §3BlockRegen §8§m        "
+                            + "\n&3/" + label + " region set <name> §8- §7set a region."
+                            + "\n&3/" + label + " region remove <name> §8- §7remove a region."
+                            + "\n&3/" + label + " region list §8- §7a list of all your regions."
+                            + "\n§8§m                                                 §r");
                 }
                 break;
             case "events":
-                if (!isPlayer(sender))
+                if (isPlayer(sender))
                     return true;
 
                 player = (Player) sender;
+
                 if (!player.hasPermission("blockregen.admin")) {
                     player.sendMessage(Messages.get("Insufficient-Permission"));
                     return true;
                 }
+
                 if (args.length < 3) {
                     if (Utils.events.isEmpty()) {
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6&m-----&r &3&lBlockRegen &6&m-----"
-                                + "\n&eYou haven't yet made any events. Make some to up your servers game!"
-                                + "\n&6&m-----------------------"));
+                        player.sendMessage("§8§m        §r §3BlockRegen §8§m        "
+                                + "\n§cYou haven't yet made any events. Make some to up your servers game!"
+                                + "\n§8§m                                                 §r");
                     } else {
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6&m-----&r &3&lBlockRegen &6&m-----"));
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eYou have the following events ready to be activated."));
+                        player.sendMessage("§8§m        §r §3BlockRegen §8§m        " +
+                                "\n§7You have the following events ready to be activated:");
                         player.sendMessage(" ");
                         for (String events : Utils.events.keySet()) {
                             String state;
@@ -215,12 +216,11 @@ public class Commands implements CommandExecutor, Listener {
                             } else {
                                 state = ChatColor.GREEN + "(active)";
                             }
-                            player.sendMessage(ChatColor.AQUA + "- " + events + " " + state);
+                            player.sendMessage(ChatColor.AQUA + "§8- §e" + events + " " + state);
                         }
-                        player.sendMessage(" ");
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eUse &3/" + label + "  events activate <event name> &eto activate it."));
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&eUse &3/" + label + "  events deactivate <event name> &eto de-activate it."));
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&6&m-----------------------"));
+                        player.sendMessage("\n§3/" + label + " events activate <event name> §8- §7activate event" +
+                                "\n§3/" + label + " events deactivate <event name> §8- §7de-activate event"
+                                + "\n§8§m                                                 §r");
                     }
                 } else {
 
