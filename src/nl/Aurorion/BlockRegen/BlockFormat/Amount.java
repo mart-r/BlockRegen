@@ -37,14 +37,6 @@ public class Amount {
         return fixed ? fixedValue : getRandom();
     }
 
-    public int low() {
-        return lowValue;
-    }
-
-    public int high() {
-        return highValue;
-    }
-
     public String toString() {
         if (fixed)
             return String.valueOf(fixedValue);

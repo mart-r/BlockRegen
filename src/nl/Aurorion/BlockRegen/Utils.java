@@ -5,7 +5,9 @@ import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
 import nl.Aurorion.BlockRegen.System.RegenProcess;
 import org.bukkit.*;
 import org.bukkit.boss.BossBar;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
@@ -30,14 +32,31 @@ public class Utils {
     // Regen processes, added on blockBreak, removed on regeneration
     public static List<RegenProcess> regenProcesses = new ArrayList<>();
 
+    // Regen times, how many times you can break the block, loaded on startup, saved onDisable
     public static HashMap<Location, Integer> regenTimesBlocks = new HashMap<>();
 
     // Firework colors
     public static List<Color> colors = new ArrayList<>();
 
     public static void clearProcess(Location loc) {
-        if (getProcess(loc) != null)
-            regenProcesses.remove(getProcess(loc));
+        RegenProcess regenProcess = getProcess(loc);
+        if (regenProcess != null) {
+
+            // Cancel particle task
+            if (regenProcess.getBlockBR().getParticleBR() != null) {
+                Main.getInstance().cO.debug("Tasks: " + regenProcess.getBlockBR().getParticleBR().getTasks().keySet().toString());
+                Main.getInstance().cO.debug(loc.toString());
+
+                if (!regenProcess.getBlockBR().getParticleBR().getTasks().isEmpty())
+                    if (regenProcess.getBlockBR().getParticleBR().getTasks().containsKey(loc)) {
+                        Main.getInstance().cO.debug("Contains task..");
+                        regenProcess.getBlockBR().getParticleBR().getTasks().get(loc).cancel();
+                    }
+            }
+
+            // Clear process
+            regenProcesses.remove(regenProcess);
+        }
     }
 
     public static RegenProcess getProcess(Location loc) {
@@ -50,20 +69,20 @@ public class Utils {
     }
 
     public static String mapToString(HashMap<?, ?> map, String splitter, String seperator, String ifEmpty) {
-        String str = ifEmpty;
+        StringBuilder str = ifEmpty == null ? null : new StringBuilder(ifEmpty);
 
         if (!map.isEmpty()) {
-            str = "";
+            str = new StringBuilder();
             for (Object key : map.keySet()) {
-                str += key.toString() + seperator + map.get(key).toString() + splitter;
+                str.append(key.toString()).append(seperator).append(map.get(key).toString()).append(splitter);
             }
         }
 
-        return str;
+        return str == null ? null : str.toString();
     }
 
-    public static void addProcess(Location loc, BukkitTask task, Material material) {
-        regenProcesses.add(new RegenProcess(loc, task, material));
+    public static void addProcess(Location loc, BukkitTask task, Material material, BlockBR blockBR, long regenTime) {
+        regenProcesses.add(new RegenProcess(loc, task, material, blockBR, regenTime));
     }
 
     public static String locationToString(Location loc) {
@@ -72,20 +91,22 @@ public class Utils {
 
     public static Location stringToLocation(String str) {
         String[] strar = str.split(";");
-        Location newLoc = new Location(Bukkit.getWorld(strar[0]), Double.valueOf(strar[1]).doubleValue(), Double.valueOf(strar[2]).doubleValue(), Double.valueOf(strar[3]).doubleValue());
+
+        Location newLoc = new Location(Bukkit.getWorld(strar[0]), Double.parseDouble(strar[1]), Double.parseDouble(strar[2]), Double.parseDouble(strar[3]));
+
         return newLoc.clone();
     }
 
     public static String listToString(List<String> list, String splitter, String ifEmpty) {
-        String stringList = ifEmpty;
+        StringBuilder stringList = ifEmpty == null ? null : new StringBuilder(ifEmpty);
         if (list != null)
             if (!list.isEmpty()) {
-                stringList = list.get(0).replace("_", " ");
+                stringList = new StringBuilder(list.get(0).replace("_", " "));
                 for (int i = 1; i < list.size(); i++) {
-                    stringList = list.get(i).replace("_", " ") + splitter + stringList;
+                    stringList.insert(0, list.get(i).replace("_", " ") + splitter);
                 }
             }
-        return stringList;
+        return stringList == null ? null : stringList.toString();
     }
 
     public static List<String> stringToList(String string) {
@@ -126,8 +147,10 @@ public class Utils {
 
     public static String parse(String str, Player p) {
         str = str.replace("%player%", p.getName());
+
         if (Main.getInstance().isPlaceholderAPI())
             str = PlaceholderAPI.setPlaceholders(p, str);
+
         return str;
     }
 
@@ -137,5 +160,37 @@ public class Utils {
 
     public static String parseAndColor(String str, Player p, BlockBR blockBR, String actualRegenTimes) {
         return color(parse(str, p, blockBR, actualRegenTimes));
+    }
+
+    // Both methods were taken directly from Spigot (Bukkit) source code & modified
+
+    /**
+     * Returns the quantity of items to drop on block destruction.
+     */
+
+    private static int quantityDropped(Material mat) {
+        return mat == Material.LAPIS_ORE ? 4 + Main.getInstance().getRandom().nextInt(5) : 1;
+    }
+
+    /**
+     * Get the quantity dropped based on the given fortune level
+     */
+
+    public static int checkFortune(Material mat, ItemStack tool) {
+        if (tool.hasItemMeta())
+            if (tool.getItemMeta().hasEnchants())
+                if (tool.getItemMeta().hasEnchant(Enchantment.LOOT_BONUS_BLOCKS)) {
+                    int fortune = tool.getItemMeta().getEnchantLevel(Enchantment.LOOT_BONUS_BLOCKS);
+
+                    if (fortune > 0) {
+                        int i = Main.getInstance().getRandom().nextInt(fortune + 2) - 1;
+
+                        if (i < 0)
+                            i = 0;
+
+                        return quantityDropped(mat) * (i + 1);
+                    } else return quantityDropped(mat);
+                }
+        return 0;
     }
 }

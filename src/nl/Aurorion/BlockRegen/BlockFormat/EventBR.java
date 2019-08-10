@@ -5,17 +5,25 @@ import org.bukkit.boss.BarColor;
 
 public class EventBR {
 
+    // Name of the event
+    // Todo add displayName X systemName
     private String name;
 
+    // Todo integrate
+    private String displayName;
+
+    // Boss Bar
     private String bossbarTitle;
     private String bossbarColor;
 
+    // Modifiers
     private boolean doubleDrops;
     private boolean doubleXp;
 
+    // Special drop
+    private boolean dropEnabled;
     private Drop drop;
 
-    private boolean dropEnabled;
     private int dropRarity;
 
     public EventBR(String name) {
@@ -24,14 +32,14 @@ public class EventBR {
         this.dropEnabled = false;
     }
 
-    public boolean isDropEnabled() {
-        return dropEnabled;
-    }
-
     public void setDropEnabled(boolean dropEnabled) {
         if (dropEnabled && drop == null)
             this.dropEnabled = false;
         this.dropEnabled = dropEnabled;
+    }
+
+    public boolean isDropEnabled() {
+        return dropEnabled;
     }
 
     public int getDropRarity() {

@@ -4,13 +4,16 @@
 # Version: 3.4.0
 
 # Get notified when there is a new version available
-Update-Checker: true
+Update-Checker: false
 
 # Debug spams the console with inner action tracking, enable this when asked by the dev, helps a lot. ;)
 Debug-Enabled: false
 
+# Print reload info to ./br reload executor?
+Reload-Info-To-Sender: true
+
 # Should Update Checker notify players with blockregen.admin?
-Update-Notify-Admins: true
+Update-Notify-Admins: false
 
 # If you have WorldEdit installed and wish to make and use regions then set this to true
 Use-Regions: false

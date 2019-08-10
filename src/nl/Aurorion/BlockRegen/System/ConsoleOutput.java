@@ -1,7 +1,8 @@
 package nl.Aurorion.BlockRegen.System;
 
 import nl.Aurorion.BlockRegen.Main;
-import nl.Aurorion.BlockRegen.Utils;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
 
 public class ConsoleOutput {
 
@@ -9,6 +10,16 @@ public class ConsoleOutput {
 
     private boolean debug;
     private String prefix;
+
+    private CommandSender reloadSender;
+
+    public void setReloadSender(CommandSender reloadSender) {
+        this.reloadSender = reloadSender;
+    }
+
+    public boolean isDebug() {
+        return debug;
+    }
 
     public ConsoleOutput(Main main) {
         this.main = main;
@@ -24,18 +35,28 @@ public class ConsoleOutput {
 
     public void debug(String msg) {
         if (debug)
-            main.getServer().getLogger().info(prefix + "§7DEBUG: " + Utils.color(msg));
+            main.getServer().getConsoleSender().sendMessage(color(prefix + "&7DEBUG: " + msg));
     }
 
     public void err(String msg) {
-        main.getServer().getLogger().info(prefix + "§4" + Utils.color(msg));
+        main.getServer().getConsoleSender().sendMessage(color(prefix + "&4" + msg));
+
+        if (reloadSender != null)
+            reloadSender.sendMessage(color("&4" + msg));
     }
 
     public void info(String msg) {
-        main.getServer().getLogger().info(prefix + "§7" + Utils.color(msg));
+        main.getServer().getConsoleSender().sendMessage(color(prefix + "&7" + msg));
     }
 
     public void warn(String msg) {
-        main.getServer().getLogger().info(prefix + "§c" + Utils.color(msg));
+        main.getServer().getConsoleSender().sendMessage(color(prefix + "&c" + msg));
+
+        if (reloadSender != null)
+            reloadSender.sendMessage(color("&c" + msg));
+    }
+
+    private String color(String str) {
+        return ChatColor.translateAlternateColorCodes('&', str);
     }
 }

@@ -11,9 +11,10 @@ import java.util.List;
 
 public class TabCompleterBR implements TabCompleter {
 
-    String[] subcommands = {"reload", "bypass", "check", "region", "events"};
-    String[] regionCommnads = {"set", "remove", "list"};
-    String[] eventCommands = {"activate", "deactivate"};
+    // Subcommand lists
+    private final String[] subcommands = {"reload", "bypass", "check", "region", "events"};
+    private final String[] regionCommnads = {"set", "remove", "list"};
+    private final String[] eventCommands = {"activate", "deactivate"};
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
@@ -29,7 +30,7 @@ public class TabCompleterBR implements TabCompleter {
                 completeList.add(subCommand);
             }
         } else if (args.length == 2) {
-            if (args[0].equals("region"))
+            if (args[0].equals("region")) {
                 for (String regionCommand : regionCommnads) {
                     if (!args[1].equals("")) {
                         if (regionCommand.toLowerCase().startsWith(args[1].toLowerCase()))
@@ -38,7 +39,15 @@ public class TabCompleterBR implements TabCompleter {
                     }
                     completeList.add(regionCommand);
                 }
-            else if (args[0].equals("events"))
+
+                // Add WorldGuard command if hooked
+                if (Main.getInstance().worldGuard != null) {
+                    if (!args[1].equals("")) {
+                        if ("fromwg".startsWith(args[1].toLowerCase()))
+                            completeList.add("fromWG");
+                    } else completeList.add("fromWG");
+                }
+            } else if (args[0].equals("events"))
                 for (String eventCommand : eventCommands) {
                     if (!args[1].equals("")) {
                         if (eventCommand.toLowerCase().startsWith(args[1].toLowerCase()))
@@ -48,16 +57,18 @@ public class TabCompleterBR implements TabCompleter {
                     completeList.add(eventCommand);
                 }
         } else if (args.length == 3) {
-            if (args[0].equals("region"))
-                for (String regionName : Main.getInstance().getFiles().getRegions().getConfigurationSection("Regions").getKeys(false)) {
-                    if (!args[2].equals("")) {
-                        if (regionName.toLowerCase().startsWith(args[2].toLowerCase()))
-                            completeList.add(regionName);
-                        continue;
+            if (args[0].equals("region")) {
+                if (!args[1].equalsIgnoreCase("fromWG"))
+                    for (String regionName : Main.getInstance().getFiles().getRegions().getConfigurationSection("Regions").getKeys(false)) {
+                        if (!args[2].equals("")) {
+                            if (regionName.toLowerCase().startsWith(args[2].toLowerCase()))
+                                completeList.add(regionName);
+                            continue;
+                        }
+
+                        completeList.add(regionName);
                     }
-                    completeList.add(regionName);
-                }
-            else if (args[0].equals("events"))
+            } else if (args[0].equals("events"))
                 for (String eventName : Utils.events.keySet()) {
                     if (!args[2].equals("")) {
                         if (eventName.toLowerCase().startsWith(args[2].toLowerCase()))
@@ -70,6 +81,7 @@ public class TabCompleterBR implements TabCompleter {
 
         if (completeList.isEmpty())
             return null;
+
         return completeList;
     }
 }

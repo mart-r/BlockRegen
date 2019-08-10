@@ -3,6 +3,12 @@ package nl.Aurorion.BlockRegen.Commands;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.regions.Region;
+import com.sk89q.worldguard.LocalPlayer;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
 import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
 import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Messages;
@@ -26,6 +32,9 @@ import java.util.Set;
 
 public class Commands implements CommandExecutor, Listener {
 
+    // Todo add regen region command
+    // Todo add ItemStack to Blocklist.yml command
+
     private Main main;
 
     public Commands(Main main) {
@@ -36,10 +45,20 @@ public class Commands implements CommandExecutor, Listener {
         s.sendMessage("§8§m        §r §3BlockRegen §7v.§f" + main.getDescription().getVersion() + " §8§m        "
                 + "\n§3/" + label + " reload §8- §7Reload the Settings.yml, Messages.yml and Blocklist.yml, also generates Recovery.yml if needed."
                 + "\n§3/" + label + " bypass §8- §7Bypass the events."
-                + "\n§3/" + label + " check §8- §7Check the name + data of the block to put in the blocklist."
+                + "\n§3/" + label + " check §8- §7Check the type of the block to put in the blocklist."
                 + "\n§3/" + label + " region §8- §7All the info to set a region."
                 + "\n§3/" + label + " events §8- §7Check all your events."
                 + "\n§8§m                                                 §r");
+    }
+
+    private void regionHelp(CommandSender s, String label) {
+        s.sendMessage("§8§m        §r §3BlockRegen §8§m        §r"
+                + "\n§3/" + label + " region set <name> §8- §7set a region."
+                + "\n§3/" + label + " region remove <name> §8- §7remove a region."
+                + "\n§3/" + label + " region list §8- §7a list of all your regions.");
+        if (main.worldGuard != null)
+            s.sendMessage("§3/" + label + " region fromWG <name> <WorldGuard ID (name)> §8- §7create a region from WG region boundaries.");
+        s.sendMessage("§8§m                                                 §r");
     }
 
     private boolean isPlayer(CommandSender sender) {
@@ -62,7 +81,6 @@ public class Commands implements CommandExecutor, Listener {
 
         switch (args[0].toLowerCase()) {
             case "reload":
-                sender.sendMessage("§7Reloading..");
                 main.reload(sender);
                 sender.sendMessage(Messages.get("Reload"));
                 break;
@@ -101,11 +119,16 @@ public class Commands implements CommandExecutor, Listener {
                 break;
             case "convert":
                 convert();
-                sender.sendMessage(Messages.get("Prefix") + "§aConverted your regions to BlockRegen 3.4.0 compatibility!");
+                sender.sendMessage(Messages.get("Prefix") + "§aConverted your regions to BlockRegen 3.4.0+ compatibility!");
                 break;
             case "region":
                 if (isPlayer(sender))
                     return true;
+
+                if (main.worldEdit == null) {
+                    sender.sendMessage(Messages.get("Prefix") + "§cWorldEdit is needed for region support.");
+                    return true;
+                }
 
                 player = (Player) sender;
 
@@ -114,7 +137,6 @@ public class Commands implements CommandExecutor, Listener {
                     return true;
                 }
 
-
                 ConfigurationSection regions = main.getFiles().getRegions().getConfigurationSection("Regions");
 
                 Set<String> regionSet = regions.getKeys(false);
@@ -122,17 +144,13 @@ public class Commands implements CommandExecutor, Listener {
                 // blockregen region set/remove/list
 
                 if (args.length < 2) {
-                    player.sendMessage("§cNot enough arguments.");
-                    player.sendMessage("§8§m        §r §3BlockRegen §8§m        "
-                            + "\n&3/" + label + " region set <name> §8- §7set a region."
-                            + "\n&3/" + label + " region remove <name> §8- §7remove a region."
-                            + "\n&3/" + label + " region list §8- §7a list of all your regions."
-                            + "\n§8§m                                                 §r");
+                    regionHelp(sender, label);
                     return true;
                 } else if (args.length == 2) {
                     if (args[1].equalsIgnoreCase("list")) {
 
-                        player.sendMessage("§8§m        §r §3BlockRegen Regions §8§m        \n");
+                        player.sendMessage("§8§m       §r §3BlockRegen Regions §8§m        §r");
+                        player.sendMessage("§r ");
                         if (!regionSet.isEmpty())
                             regionSet.forEach(loopRegion -> player.sendMessage("§8 - §7" + loopRegion));
                         else
@@ -173,21 +191,47 @@ public class Commands implements CommandExecutor, Listener {
                                 player.sendMessage(Messages.get("Unknown-Region"));
                             break;
                         default:
-                            player.sendMessage("§8§m        §r §3BlockRegen §8§m        "
-                                    + "\n&3/" + label + " region set <name> §8- §7set a region."
-                                    + "\n&3/" + label + " region remove <name> §8- §7remove a region."
-                                    + "\n&3/" + label + " region list §8- §7a list of all your regions."
-                                    + "\n§8§m                                                 §r");
+                            regionHelp(sender, label);
                             break;
                     }
-                } else {
-                    player.sendMessage("§cToo many arguments.");
-                    player.sendMessage("§8§m        §r §3BlockRegen §8§m        "
-                            + "\n&3/" + label + " region set <name> §8- §7set a region."
-                            + "\n&3/" + label + " region remove <name> §8- §7remove a region."
-                            + "\n&3/" + label + " region list §8- §7a list of all your regions."
-                            + "\n§8§m                                                 §r");
-                }
+                } else if (args.length == 4) {
+                    if (args[1].equalsIgnoreCase("fromWG")) {
+
+                        if (main.worldGuard == null) {
+                            player.sendMessage(Messages.get("WorldGuard-Required"));
+                            return true;
+                        }
+
+                        // Duplication check
+                        if (regionSet.contains(args[2])) {
+                            player.sendMessage(Messages.get("Duplicated-Region"));
+                            return true;
+                        }
+
+                        LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
+
+                        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+
+                        RegionManager regionManager = container.get(localPlayer.getWorld());
+
+                        // Check region
+                        if (!regionManager.hasRegion(args[3])) {
+                            player.sendMessage(Messages.get("Invalid-Region-Id"));
+                            player.sendMessage(Messages.get("Invalid-Region-Id-Tip"));
+                            return true;
+                        }
+
+                        ProtectedRegion region = regionManager.getRegion(args[3]);
+
+                        // Save region
+                        main.getFiles().getRegions().set("Regions." + args[2] + ".Min", Utils.locationToString(BukkitAdapter.adapt(player.getWorld(), region.getMinimumPoint())));
+                        main.getFiles().getRegions().set("Regions." + args[2] + ".Max", Utils.locationToString(BukkitAdapter.adapt(player.getWorld(), region.getMaximumPoint())));
+
+                        main.getFiles().saveRegions();
+
+                        player.sendMessage(Messages.get("Imported-Region"));
+                    } else regionHelp(sender, label);
+                } else regionHelp(sender, label);
                 break;
             case "events":
                 if (isPlayer(sender))

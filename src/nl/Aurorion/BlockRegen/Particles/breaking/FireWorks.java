@@ -7,7 +7,6 @@ import org.bukkit.FireworkEffect;
 import org.bukkit.FireworkEffect.Type;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.inventory.meta.FireworkMeta;
@@ -18,17 +17,18 @@ import java.util.Random;
 public class FireWorks implements Runnable {
 
     private Main main;
-    private Block block;
+    private Location location;
 
-    public FireWorks(Main instance, Block block) {
+    public FireWorks(Main instance, Location location) {
         this.main = instance;
-        this.block = block;
+        this.location = location;
     }
 
     @Override
     public void run() {
-        World world = block.getWorld();
-        Location loc = block.getLocation();
+        World world = location.getWorld();
+        Location loc = location;
+
         loc.add(0.5, 0.5, 0.5);
         Firework fw = (Firework) world.spawnEntity(loc, EntityType.FIREWORK);
         loc.subtract(0.5, 0.5, 0.5);
@@ -47,6 +47,6 @@ public class FireWorks implements Runnable {
                 fw.detonate();
             }
 
-        }.runTaskLaterAsynchronously(main, 2l);
+        }.runTaskLaterAsynchronously(main, 2L);
     }
 }

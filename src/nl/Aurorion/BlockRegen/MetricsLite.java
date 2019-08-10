@@ -23,7 +23,7 @@ import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * bStats collects some data for plugin authors.
+ * bStats collects some recoveryData for plugin authors.
  * <p>
  * Check out https://bStats.org/ to learn more about bStats!
  */
@@ -46,7 +46,7 @@ public class MetricsLite {
     // The version of this bStats class
     public static final int B_STATS_VERSION = 1;
 
-    // The url to which the data is sent
+    // The url to which the recoveryData is sent
     private static final String URL = "https://bStats.org/submitData/bukkit";
 
     // Is bStats enabled on this server?
@@ -55,7 +55,7 @@ public class MetricsLite {
     // Should failed requests be logged?
     private static boolean logFailedRequests;
 
-    // Should the sent data be logged?
+    // Should the sent recoveryData be logged?
     private static boolean logSentData;
 
     // Should the response text be logged?
@@ -92,14 +92,14 @@ public class MetricsLite {
             config.addDefault("serverUuid", UUID.randomUUID().toString());
             // Should failed request be logged?
             config.addDefault("logFailedRequests", false);
-            // Should the sent data be logged?
+            // Should the sent recoveryData be logged?
             config.addDefault("logSentData", false);
             // Should the response text be logged?
             config.addDefault("logResponseStatusText", false);
 
             // Inform the server owners about bStats
             config.options().header(
-                    "bStats collects some data for plugin authors like how many servers are using their plugins.\n" +
+                    "bStats collects some recoveryData for plugin authors like how many servers are using their plugins.\n" +
                             "To honor their work, you should not disable it.\n" +
                             "This has nearly no effect on the server performance!\n" +
                             "Check out https://bStats.org/ to learn more :)"
@@ -109,7 +109,7 @@ public class MetricsLite {
             } catch (IOException ignored) { }
         }
 
-        // Load the data
+        // Load the recoveryData
         serverUUID = config.getString("serverUuid");
         logFailedRequests = config.getBoolean("logFailedRequests", false);
         enabled = config.getBoolean("enabled", true);
@@ -142,7 +142,7 @@ public class MetricsLite {
     }
 
     /**
-     * Starts the Scheduler which submits our data every 30 minutes.
+     * Starts the Scheduler which submits our recoveryData every 30 minutes.
      */
     private void startSubmitting() {
         final Timer timer = new Timer(true); // We use a timer cause the Bukkit scheduler is affected by server lags
@@ -158,16 +158,16 @@ public class MetricsLite {
                 Bukkit.getScheduler().runTask(plugin, () -> submitData());
             }
         }, 1000 * 60 * 5, 1000 * 60 * 30);
-        // Submit the data every 30 minutes, first time after 5 minutes to give other plugins enough time to start
+        // Submit the recoveryData every 30 minutes, first time after 5 minutes to give other plugins enough time to start
         // WARNING: Changing the frequency has no effect but your plugin WILL be blocked/deleted!
         // WARNING: Just don't do it!
     }
 
     /**
-     * Gets the plugin specific data.
+     * Gets the plugin specific recoveryData.
      * This method is called using Reflection.
      *
-     * @return The plugin specific data.
+     * @return The plugin specific recoveryData.
      */
     @SuppressWarnings("unchecked")
 	public JSONObject getPluginData() {
@@ -185,13 +185,13 @@ public class MetricsLite {
     }
 
     /**
-     * Gets the server specific data.
+     * Gets the server specific recoveryData.
      *
-     * @return The server specific data.
+     * @return The server specific recoveryData.
      */
     @SuppressWarnings("unchecked")
 	private JSONObject getServerData() {
-        // Minecraft specific data
+        // Minecraft specific recoveryData
         int playerAmount;
         try {
             // Around MC 1.8 the return type was changed to a collection from an array,
@@ -206,7 +206,7 @@ public class MetricsLite {
         int onlineMode = Bukkit.getOnlineMode() ? 1 : 0;
         String bukkitVersion = Bukkit.getVersion();
 
-        // OS/Java specific data
+        // OS/Java specific recoveryData
         String javaVersion = System.getProperty("java.version");
         String osName = System.getProperty("os.name");
         String osArch = System.getProperty("os.arch");
@@ -231,14 +231,14 @@ public class MetricsLite {
     }
 
     /**
-     * Collects the data and sends it afterwards.
+     * Collects the recoveryData and sends it afterwards.
      */
     @SuppressWarnings("unchecked")
 	private void submitData() {
         final JSONObject data = getServerData();
 
         JSONArray pluginData = new JSONArray();
-        // Search for all other bStats Metrics classes to get their plugin data
+        // Search for all other bStats Metrics classes to get their plugin recoveryData
         for (Class<?> service : Bukkit.getServicesManager().getKnownServices()) {
             try {
                 service.getField("B_STATS_VERSION"); // Our identifier :)
@@ -259,7 +259,7 @@ public class MetricsLite {
             @Override
             public void run() {
                 try {
-                    // Send the data
+                    // Send the recoveryData
                     sendData(plugin, data);
                 } catch (Exception e) {
                     // Something went wrong! :(
@@ -272,10 +272,10 @@ public class MetricsLite {
     }
 
     /**
-     * Sends the data to the bStats server.
+     * Sends the recoveryData to the bStats server.
      *
      * @param plugin Any plugin. It's just used to get a logger instance.
-     * @param data The data to send.
+     * @param data The recoveryData to send.
      * @throws Exception If the request failed.
      */
     private static void sendData(Plugin plugin, JSONObject data) throws Exception {
@@ -286,11 +286,11 @@ public class MetricsLite {
             throw new IllegalAccessException("This method must not be called from the main thread!");
         }
         if (logSentData) {
-            plugin.getLogger().info("Sending data to bStats: " + data.toString());
+            plugin.getLogger().info("Sending recoveryData to bStats: " + data.toString());
         }
         HttpsURLConnection connection = (HttpsURLConnection) new URL(URL).openConnection();
 
-        // Compress the data to save bandwidth
+        // Compress the recoveryData to save bandwidth
         byte[] compressedData = compress(data.toString());
 
         // Add headers
@@ -299,10 +299,10 @@ public class MetricsLite {
         connection.addRequestProperty("Connection", "close");
         connection.addRequestProperty("Content-Encoding", "gzip"); // We gzip our request
         connection.addRequestProperty("Content-Length", String.valueOf(compressedData.length));
-        connection.setRequestProperty("Content-Type", "application/json"); // We send our data in JSON format
+        connection.setRequestProperty("Content-Type", "application/json"); // We send our recoveryData in JSON format
         connection.setRequestProperty("User-Agent", "MC-Server/" + B_STATS_VERSION);
 
-        // Send data
+        // Send recoveryData
         connection.setDoOutput(true);
         DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream());
         outputStream.write(compressedData);
@@ -319,7 +319,7 @@ public class MetricsLite {
         }
         bufferedReader.close();
         if (logResponseStatusText) {
-            plugin.getLogger().info("Sent data to bStats and received response: " + builder.toString());
+            plugin.getLogger().info("Sent recoveryData to bStats and received response: " + builder.toString());
         }
     }
 

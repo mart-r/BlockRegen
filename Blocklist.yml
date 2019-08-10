@@ -17,7 +17,8 @@ Blocks:
     # You can specify a command that is executed by the console
     # Example: console-command: "give %player% apple 64"
     # Leave empty to ignore this function
-    console-command: "say The console-command function is working!"
+    console-command:
+      - "say The console-command function is working!"
     # You can specify a command that is executed by the player itself
     # Example: console-command: "me I, %player%, executed this command"
     # Leave empty to ignore this function
@@ -32,8 +33,6 @@ Blocks:
     # You can check what job and what level a player needs to be.
     # Format: Job;Level
     #jobs-check: Farmer;2
-    # On break there can be particles displayed.
-    # For a list of options see:
     particles: flame_crown
     # Give drops, exp and amount as it would be in vanilla.
     # Set this to false to use the other options.
@@ -119,7 +118,7 @@ Blocks:
           - "&aQuack quack quack"
         drop-naturally: true
         rarity: 10
-  # Example for 3.6.0, old formatting still works, no changes needed to upgrade from lower plugin versions.
+  # Example for 3.6.0-b1, old formatting still works, no changes needed to upgrade from lower plugin versions.
   GOLD_ORE:
     # Has to be present for the block format to work, everything else can be removed.
     replace-block: STONE
@@ -171,7 +170,7 @@ Blocks:
           material: STONE
           # Fixed amount
           amount: 1
-    # No changes in events.
+    # No major changes in events
     event:
       # Only the name is needed in order for the event to work.
       event-name: '&6Gold fever'
@@ -183,6 +182,7 @@ Blocks:
       bossbar:
         color: RED
         title: '&7Event %event% &7is active!'
+  # 3.6.0-b4 example, added placeholders, permission conditions, on-regen actions, messages, apply-events boolean
   EMERALD_BLOCK:
     replace-block: STONE
     regen-delay: 60
@@ -191,11 +191,11 @@ Blocks:
     permission: emerald.god
     # Message sent to all players currently on the server
     broadcast-message:
-    - '&7&m---&r &6! &aBR &6! &7&m----&r'
-    - '&7%player_name% just mined the mighty block!'
-    - "&7It's going to respawn in &a%regenDelay%&7s!"
-    - '&7Respawns left: &a%regenTimesActual%&7/&2%regenTimesMax%'
-    - '&7&m---&r &6! &aBR &6! &7&m----&r'
+      - '&7&m---&r &6! &aBR &6! &7&m----&r'
+      - '&7%player_name% just mined the mighty block!'
+      - "&7It's going to respawn in &a%regenDelay%&7s!"
+      - '&7Respawns left: &a%regenTimesActual%&7/&2%regenTimesMax%'
+      - '&7&m---&r &6! &aBR &6! &7&m----&r'
     # Message sent to the player
     inform-message: '&6! &aBR &7Congrats you mined a block!'
     # Actions fired when the block regenerates.
@@ -203,9 +203,9 @@ Blocks:
       # Options: console-commands, inform-message, broadcast-message
       inform-message: "&7Remember the block you mined a few secs before? It's back tho!"
       broadcast-message:
-      - '&7&m---&r &6! &aBR &6! &7&m----&r'
-      - '&7The almighty block is back.'
-      - '&7&m---&r &6! &aBR &6! &7&m----&r'
+        - '&7&m---&r &6! &aBR &6! &7&m----&r'
+        - '&7The almighty block is back.'
+        - '&7&m---&r &6! &aBR &6! &7&m----&r'
     drop-items:
       special_emerald:
         material: emerald
@@ -213,5 +213,56 @@ Blocks:
         # When there are more items, prevents double-drops/double-exp from taking effect.
         apply-events: false
         lore:
-        - "&7It's special, because &a%player_name% &7mined it ;)"
+          - "&7It's special, because &a%player_name% &7mined it ;)"
+        amount: 1
+  # 3.6.0-b5 example, added fortune integration, new particle system
+  DIAMOND_BLOCK:
+    replace-block: WHITE_STAINED_GLASS
+    regen-delay: 5
+    # Prevents fortune from taking effect
+    # Fortune works the same way as it does in vanilla mining when natural-break is true
+    # When using custom drops, the fortune enchantment has a chance to add to the base amount set by the format
+    apply-fortune: true
+    # Particles displayed when the block is broken, tasks are cancelled when the block is regenerated.
+    # You can still use the old ones: flame_crown, witch_spell, fireworks
+    # Hope this fulfills everyone's desire for customisation
+    particles:
+      # shapes: circle (on top side of the block, like flame_crown), center (in the center of the block), frame (running across all the edges, set small amounts and offsets)
+      # Going to add some more, you know where to request ;)
+      shape: frame
+      # Particle Type
+      # Available types: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
+      # More special particle settings will be added later, like directional particles and other colored ones.
+      type: REDSTONE
+      # Speed of the particle
+      speed: 0
+      # Count of the particles spawned on at one place
+      particle-count: 1
+      # Extra data parameter, can be used by some particles to change their behavior
+      extra: 0
+      # Used for REDSTONE type only
+      # RGB color code
+      color: 255;255;255
+      # REDSTONE only, controls the size of each particle
+      size: 1
+      # Particle offset (spread), 1;1;1 == particles will be spread across the volume of one block
+      # x;y;z
+      offset: 0;0;0
+      # Thanks to the runnable options, you're able to have the particles beat when the block is waiting to regenerate,.. like this example works.
+      # Delay before the particles start spawning
+      delay: 0
+      # Delay in ticks between each spawn
+      # Be careful setting this too low, can lag.. a lot.
+      period: 4
+      # How many times to spawn the particles
+      count: 50
+      # Space between particles, FRAME shape only
+      # Greatly increases number of particles, try to keep above 0.1
+      space: 0.1
+    drop-items:
+      bonus_diamond:
+        material: diamond
+        name: '&3Little Diamond'
+        lore:
+          - "&7Mined by %player%"
         amount: 1

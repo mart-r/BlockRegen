@@ -1,6 +1,5 @@
 package nl.Aurorion.BlockRegen.BlockFormat;
 
-import me.clip.placeholderapi.PlaceholderAPI;
 import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Utils;
 import org.bukkit.Material;
@@ -9,13 +8,18 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Drop {
 
     // Todo add more ItemStack data
 
+    // ItemStack data ----------------------------------
     private Material material;
+
+    // Amount, random/fixed
+    private Amount amount;
 
     private String displayName;
     private List<String> lore;
@@ -24,7 +28,9 @@ public class Drop {
     private List<String> flags;
 
     // NBT UTILS NEEDED
-    private List<String> NBTData;
+    // key, value
+    private HashMap<String, String> NBTData;
+    // --------------------------------------------------
 
     // Muh.
     private boolean dropNaturally;
@@ -34,8 +40,7 @@ public class Drop {
     // Amounts
     private Amount expAmount;
 
-    private Amount amount;
-
+    // Apply event boosters to drop?
     private boolean applyEvents;
 
     // Used when loading the block
@@ -52,7 +57,7 @@ public class Drop {
         try {
             this.material = Material.valueOf(material.toUpperCase());
         } catch (NullPointerException | IllegalArgumentException e) {
-            Main.getInstance().cO.warn(material + " is not a valid Material, skipping the drop item..");
+            Main.getInstance().cO.warn(material + " in " + id + " is not a valid Material, skipping the drop item..");
             valid = false;
             return;
         }
@@ -60,22 +65,21 @@ public class Drop {
         valid = true;
     }
 
+    // Create ItemStack and parse placeholders
     public ItemStack getItemStack(Player player) {
         ItemStack item = new ItemStack(material, amount.getAmount());
 
         ItemMeta meta = item.getItemMeta();
 
-        if (Main.getInstance().isPlaceholderAPI()) {
-            meta.setDisplayName(Utils.color(PlaceholderAPI.setPlaceholders(player, displayName)));
-            for (String line : lore)
-                lore.set(lore.indexOf(line), PlaceholderAPI.setPlaceholders(player, line));
-        } else {
-            meta.setDisplayName(Utils.color(displayName));
-        }
+        meta.setDisplayName(Utils.parseAndColor(displayName, player));
+
+        for (String line : lore)
+            lore.set(lore.indexOf(line), Utils.parseAndColor(line, player));
 
         meta.setLore(lore);
 
         item.setItemMeta(meta);
+
         return item;
     }
 
