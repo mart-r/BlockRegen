@@ -139,7 +139,7 @@ Blocks:
     player-commands: 'me Wooohooo!'
     # Now works with minimum level of an enchant, just like jobs.
     # Enchant;level
-    enchant-required: LOOT_BONUS_BLOCKS, DURABILITY;2
+    enchant-required: FORTUNE, UNBREAKING;2
     # No changes here.
     tool-required: GOLDEN_PICKAXE
     # No changes, also.

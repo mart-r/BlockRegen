@@ -187,9 +187,8 @@ public class BlockBreak implements Listener {
             main.cO.debug("Breaks left: " + Utils.regenTimesBlocks.get(block.getLocation()));
 
             // Data Recovery -------------------------------------------------------------------------------------------
-            ConfigurationSection recoverySection = main.getFiles().getData().getConfigurationSection("Recovery");
-
             if (main.isDataRecovery()) {
+                ConfigurationSection recoverySection = main.getFiles().getData().getConfigurationSection("Recovery");
 
                 List<String> locations = new ArrayList<>();
 
@@ -218,7 +217,8 @@ public class BlockBreak implements Listener {
                     Utils.clearProcess(loc);
 
                     // Recovery remove
-                    if (main.isDataRecovery())
+                    if (main.isDataRecovery()) {
+                        ConfigurationSection recoverySection = main.getFiles().getData().getConfigurationSection("Recovery");
                         if (recoverySection.contains(blockType)) {
 
                             List<String> locations = recoverySection.getStringList(blockType);
@@ -233,6 +233,7 @@ public class BlockBreak implements Listener {
                             } else
                                 recoverySection.set(blockType, null);
                         }
+                    }
 
                     // Run onRegen actions
                     blockBR.onRegen(player, block.getLocation());

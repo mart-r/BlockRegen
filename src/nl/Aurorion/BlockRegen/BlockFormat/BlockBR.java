@@ -21,63 +21,80 @@ import java.util.List;
 
 public class BlockBR {
 
-    /*
-     * null list => empty/null
-     * null String => ""
-     * null int => 0
-     * */
-
     // Misc
 
+    // Materials, checked on load, cannot be null when already loaded to cache
     private Material blockType;
     private Material replaceBlock;
 
+    // Default: true
     private boolean regenerate;
 
+    // Default: unlimited
     private int regenTimes;
 
+    // Default: 3s
     private int regenDelay;
+
+    // Default: false
     private boolean naturalBreak;
 
+    // Default: true
     private boolean applyFortune;
 
+    // Can be null
     private EventBR event;
 
     // Rewards
 
-    private List<String> consoleCommands;
-    private List<String> playerCommands;
+    // Commands
+    private List<String> consoleCommands = new ArrayList<>();
+    private List<String> playerCommands = new ArrayList<>();
 
-    private List<String> broadcastMessage;
-    private List<String> informMessage;
+    // Messages
+    private List<String> broadcastMessage = new ArrayList<>();
+    private List<String> informMessage = new ArrayList<>();
 
+    // Legacy particle
     private String particle;
-    private Amount money;
 
-    private List<Drop> drops;
-
-    // On-regen
-
-    private List<String> onRegenConsoleCommands;
-
-    private List<String> onRegenBroadcastMessage;
-    private List<String> onRegenInformMessage;
-
-    // Conditions
-
-    private List<String> toolsRequired;
-    private List<String> enchantsRequired;
-
-    private List<JobRequirement> jobRequirements;
-    private String permission;
-
+    // New particle format system
     private ParticleBR particleBR;
 
+    // Vault money
+    private Amount money;
+
+    // Item drops
+    private List<Drop> drops = new ArrayList<>();
+
+    // On-regen rewards
+    private List<String> onRegenConsoleCommands = new ArrayList<>();
+
+    private List<String> onRegenBroadcastMessage = new ArrayList<>();
+    private List<String> onRegenInformMessage = new ArrayList<>();
+
+    // Conditions
+    private List<String> toolsRequired = new ArrayList<>();
+    private List<String> enchantsRequired = new ArrayList<>();
+
+    private List<JobRequirement> jobRequirements = new ArrayList<>();
+
+    // Permission player has to have
+    private String permission;
+
+    // Format validation for loading
     private boolean valid;
 
     public boolean isValid() {
         return valid;
     }
+
+    /**
+     * A 'format' which the plugin follows when taking action
+     *
+     * @param blockType type of block in string
+     * @param replaceBlock type of block which to repalce with in string
+     * */
 
     public BlockBR(String blockType, String replaceBlock) {
         try {
@@ -96,20 +113,10 @@ public class BlockBR {
             return;
         }
 
-        this.drops = new ArrayList<>();
-        this.enchantsRequired = new ArrayList<>();
-        this.toolsRequired = new ArrayList<>();
-        this.jobRequirements = new ArrayList<>();
-        this.playerCommands = new ArrayList<>();
-        this.consoleCommands = new ArrayList<>();
-        this.onRegenInformMessage = new ArrayList<>();
-        this.onRegenBroadcastMessage = new ArrayList<>();
-        this.onRegenConsoleCommands = new ArrayList<>();
-
         valid = true;
     }
 
-    // ----------------- Checked setters ------------------------
+    //------------------------------------- Checked setters -------------------------------------
 
     public void setToolsRequired(List<String> toolsRequired) {
 
@@ -215,7 +222,7 @@ public class BlockBR {
 
         Main.getInstance().cO.debug("Passed permission check");
 
-        // Tools
+        //------------------------------------- Tool check -------------------------------------
 
         ItemStack tool = player.getInventory().getItemInMainHand();
 
@@ -239,7 +246,7 @@ public class BlockBR {
 
         Main.getInstance().cO.debug("Tool check passed");
 
-        // Enchant check
+        //------------------------------------- Enchant check -------------------------------------
 
         if (!enchantsRequired.isEmpty()) {
 
@@ -270,7 +277,7 @@ public class BlockBR {
         } else
             Main.getInstance().cO.debug("Skipping enchant check");
 
-        // Jobs
+        //------------------------------------- Jobs -------------------------------------
 
         if (Main.getInstance().getJobs() && jobRequirements != null) {
             if (!jobRequirements.isEmpty()) {
@@ -309,7 +316,7 @@ public class BlockBR {
             }
         }
 
-        Main.getInstance().cO.debug("Nominal, pass");
+        Main.getInstance().cO.debug("Norminal, pass");
 
         return true;
     }
@@ -336,7 +343,7 @@ public class BlockBR {
         else if (regenTimes != 0)
             actualRegenTimes = String.valueOf(regenTimes - 1);
 
-        // Commands and messages ----------------------------------------------------------------
+        //------------------------------------- Command and Messages -------------------------------------
 
         // Parsing sand firing console commands
         if (!consoleCommands.isEmpty())
@@ -353,7 +360,7 @@ public class BlockBR {
                 Main.getInstance().getServer().dispatchCommand(player, command);
             }
 
-        // Parsing and broadcasting messages
+        // Parsing and broadcasting messages to all online players
         if (!broadcastMessage.isEmpty())
             for (String line : broadcastMessage) {
                 line = Utils.parseAndColor(line, player, this, actualRegenTimes);
@@ -361,17 +368,17 @@ public class BlockBR {
                     p.sendMessage(line);
             }
 
-        // Parsing and sending messages
+        // Parsing and sending messages to player who broke the block
         if (!informMessage.isEmpty())
             for (String line : informMessage) {
                 line = Utils.parseAndColor(line, player, this, actualRegenTimes);
                 player.sendMessage(line);
             }
 
-        // Item Drops ---------------------------------------------------------------------------
+        //------------------------------------- Item & EXP Drops -------------------------------------
 
         // Go with vanilla drops?
-        if (!naturalBreak)
+        if (!naturalBreak) {
             // Custom drops
             if (!drops.isEmpty())
                 for (Drop drop : drops) {
@@ -394,7 +401,7 @@ public class BlockBR {
                             }
 
                     // Modify item amount based on Fortune enchantment
-                    // Adds fortune generated amount to the base amount picked by format
+                    // Adds fortune generated amount to the base amount picked by block format
                     if (applyFortune)
                         if (tool != null)
                             item.setAmount(item.getAmount() + Utils.checkFortune(block.getType(), tool));
@@ -402,86 +409,89 @@ public class BlockBR {
                     // Drop Item
                     if (item.getAmount() > 0)
                         if (drop.isDropNaturally())
+                            // Naturally
                             blockLocation.getWorld().dropItemNaturally(blockLocation, item);
                         else
+                            // Directly to inventory
                             player.getInventory().addItem(item);
 
                     // Drop Experience
                     if (expDrop > 0)
                         if (drop.isDropExpNaturally())
+                            // Naturally
                             blockLocation.getWorld().spawn(blockLocation, ExperienceOrb.class).setExperience(expDrop);
                         else
+                            // Add the exp
                             player.giveExp(expDrop);
                 }
-            else {
-                // Vanilla drops
-                if (block != null) {
-                    if (!block.getDrops().isEmpty())
-                        for (ItemStack item : block.getDrops()) {
+        } else {
+            // Vanilla drops
+            if (!block.getDrops().isEmpty())
+                for (ItemStack item : block.getDrops()) {
 
-                            // Event modifier
-                            if (event != null)
-                                if (Utils.events.get(Utils.removeColors(event.getName()))) {
-                                    if (event.isDoubleDrops())
-                                        item.setAmount(item.getAmount() * 2);
+                    // Event modifier
+                    if (event != null)
+                        if (Utils.events.get(Utils.removeColors(event.getName()))) {
+                            if (event.isDoubleDrops())
+                                item.setAmount(item.getAmount() * 2);
 
-                                    if (event.isDoubleXp())
-                                        expDrop *= 2;
-                                }
-
-                            // Modify item amount based on Fortune enchantment
-                            // Works like Vanilla fortune
-                            if (applyFortune)
-                                if (tool != null)
-                                    item.setAmount(Utils.checkFortune(block.getType(), tool));
-
-                            // Above can set to 0, we don't want that here.
-                            if (item.getAmount() == 0)
-                                item.setAmount(1);
-
-                            // Drop Experience
-                            if (expDrop > 0)
-                                block.getWorld().spawn(blockLocation, ExperienceOrb.class).setExperience(expDrop);
-
-                            // Drop Item
-                            if (item.getAmount() > 0)
-                                blockLocation.getWorld().dropItemNaturally(blockLocation, item);
+                            if (event.isDoubleXp())
+                                expDrop *= 2;
                         }
-                }
-            }
 
-        // Special Event Item -------------------------------------------------------------------------------
+                    // Modify item amount based on Fortune enchantment
+                    // Works like Vanilla fortune
+                    if (applyFortune)
+                        if (tool != null)
+                            item.setAmount(Utils.checkFortune(block.getType(), tool));
+
+                    // Above can set to 0, we don't want that here.
+                    if (item.getAmount() == 0)
+                        item.setAmount(1);
+
+                    // Drop Experience
+                    if (expDrop > 0)
+                        block.getWorld().spawn(blockLocation, ExperienceOrb.class).setExperience(expDrop);
+
+                    // Drop Item
+                    if (item.getAmount() > 0)
+                        blockLocation.getWorld().dropItemNaturally(blockLocation, item);
+                }
+        }
+
+        //------------------------------------- Special Event Item -------------------------------------
         if (event != null)
-            if (Utils.events.get(Utils.removeColors(event.getName()))) {
-                if (event.getDrop() != null) {
-                    if (event.isDropEnabled())
-                        if (Main.getInstance().getRandom().nextInt(event.getDropRarity()) + 1 == 1) {
-                            ItemStack eventItem = event.getDrop().getItemStack(player);
+            if (Utils.events.get(Utils.removeColors(event.getName())) && event.getDrop() != null && event.isDropEnabled() && Main.getInstance().getRandom().nextInt(event.getDropRarity()) + 1 == 1) {
+                ItemStack eventItem = event.getDrop().getItemStack(player);
 
-                            // Drop Item
-                            if (eventItem.getAmount() > 0)
-                                if (event.getDrop().isDropNaturally())
-                                    blockLocation.getWorld().dropItemNaturally(blockLocation, eventItem);
-                                else
-                                    player.getInventory().addItem(eventItem);
-                        }
-                }
+                // Drop Item
+                if (eventItem.getAmount() > 0)
+                    if (event.getDrop().isDropNaturally())
+                        // Naturally
+                        blockLocation.getWorld().dropItemNaturally(blockLocation, eventItem);
+                    else
+                        // Directly to inventory
+                        player.getInventory().addItem(eventItem);
             }
 
-        // Money ------------------------------------------------------------------------------------------
+        //------------------------------------- Vault money -------------------------------------
         if (money != null) {
+            // Fetch amount
             int moneyToGive = money.getAmount();
+
             if (moneyToGive != 0 && Main.getInstance().getEconomy() != null) {
                 EconomyResponse response = Main.getInstance().getEconomy().depositPlayer(player, moneyToGive);
+
+                // Can fail, not so common
                 if (response.transactionSuccess())
                     Main.getInstance().cO.debug("Gave " + moneyToGive + " to " + player.getName());
-                else
-                    Main.getInstance().cO.err("Could not deposit money to player's account.");
+                else Main.getInstance().cO.err("Could not deposit money to player's account.");
             }
         }
 
-        // Particles --------------------------------------------------------------------------------------
+        //------------------------------------- Particles -------------------------------------
 
+        // We still support both options, three base types from older versions & new particleBR system
         if (particle != null)
             showParticle(blockLocation);
         else if (particleBR != null)
@@ -495,15 +505,22 @@ public class BlockBR {
      * @param location Location of the mined block
      */
 
-    @Deprecated
     private void showParticle(Location location) {
         Main.getInstance().getParticles().check(particle, location);
     }
+
+    /**
+     * Actions fired once the block is regenerated
+     *
+     * @param player Player who originally broke the block
+     * @param blockLocation Location of the broken block
+     * */
 
     public void onRegen(Player player, Location blockLocation) {
 
         Main.getInstance().cO.debug("On-regen actions running..");
 
+        // Regen times placeholders
         String actualRegenTimes = "Unlimited";
 
         if (Utils.regenTimesBlocks.containsKey(blockLocation))
@@ -511,14 +528,16 @@ public class BlockBR {
         else if (regenTimes != 0)
             actualRegenTimes = String.valueOf(regenTimes);
 
-        // Commands
+        //------------------------------------- Commands & Messages -------------------------------------
+
+        // Console commands
         if (!onRegenConsoleCommands.isEmpty())
             for (String command : onRegenConsoleCommands) {
                 command = Utils.parse(command, player, this, actualRegenTimes);
                 Main.getInstance().getServer().dispatchCommand(Main.getInstance().getServer().getConsoleSender(), command);
             }
 
-        // Messages
+        // Broadcast message to all online players
         if (!onRegenBroadcastMessage.isEmpty())
             for (String line : onRegenBroadcastMessage) {
                 line = Utils.parseAndColor(line, player, this, actualRegenTimes);
@@ -527,10 +546,13 @@ public class BlockBR {
                     p.sendMessage(line);
             }
 
+        // Inform message sent to player
         if (!onRegenInformMessage.isEmpty())
             for (String line : onRegenInformMessage)
                 player.sendMessage(Utils.parseAndColor(line, player, this, actualRegenTimes));
     }
+
+    //------------------------------------- Getters & Setters -------------------------------------
 
     public Material getReplaceBlock() {
         return replaceBlock;

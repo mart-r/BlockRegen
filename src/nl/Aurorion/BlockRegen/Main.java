@@ -128,7 +128,6 @@ public class Main extends JavaPlugin {
         formatHandler = new FormatHandler(this);
 
         // Commands and events
-        registerCommands();
         registerEvents();
 
         // Load messages to cache
@@ -179,6 +178,8 @@ public class Main extends JavaPlugin {
                 Utils.regenTimesBlocks.put(loc, value);
             }
         else data.createSection("Regen-Times");
+
+        registerCommands();
 
         // And we're all done
         cO.info("§aDone loading.");
