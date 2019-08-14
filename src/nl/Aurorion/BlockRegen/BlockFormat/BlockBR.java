@@ -37,6 +37,8 @@ public class BlockBR {
     private int regenDelay;
     private boolean naturalBreak;
 
+    private boolean applyFortune;
+
     private List<String> consoleCommands;
     private List<String> playerCommands;
     private String particle;
@@ -46,6 +48,8 @@ public class BlockBR {
     private List<String> toolsRequired;
     private List<String> enchantsRequired;
     private JobRequirement jobRequirement;
+    private String permission;
+
     private List<Drop> drops;
 
     private EventBR event;
@@ -95,6 +99,7 @@ public class BlockBR {
 
     public void reward(Player player, Block block, int expDrop, Location... loc) {
         Location blockLocation;
+        ItemStack tool = player.getInventory().getItemInMainHand();
 
         if (block != null)
             blockLocation = block.getLocation();
@@ -120,53 +125,73 @@ public class BlockBR {
 
         // Custom drops
         // Drop Vanilla stuff?
-        if (!naturalBreak)
+        if (!naturalBreak) {
             // Custom drops
-            for (Drop drop : drops) {
+            if (!drops.isEmpty())
+                for (Drop drop : drops) {
 
-                Main.getInstance().cO.debug("Drop: " + drop.getId());
+                    Main.getInstance().cO.debug("Drop: " + drop.getId());
 
-                ItemStack item = drop.getItemStack(player);
+                    ItemStack item = drop.getItemStack(player);
 
-                Main.getInstance().cO.debug("EXP: " + drop.getExpAmount().toString() + " AMOUNT:" + drop.getExpAmount().getAmount());
-                expDrop = drop.getExpAmount().getAmount();
+                    Main.getInstance().cO.debug("EXP: " + drop.getExpAmount().toString() + " AMOUNT:" + drop.getExpAmount().getAmount());
+                    expDrop = drop.getExpAmount().getAmount();
 
-                Main.getInstance().cO.debug("Loaded events: " + Utils.events.toString() + " Event: " + Utils.removeColors(event.getName()));
+                    Main.getInstance().cO.debug("Loaded events: " + Utils.events.toString() + " Event: " + Utils.removeColors(event.getName()));
 
-                // Apply event boosters
-                if (Utils.events.get(Utils.removeColors(event.getName()))) {
-                    if (event.isDoubleDrops())
-                        item.setAmount(item.getAmount() * 2);
+                    // Apply event boosters
+                    if (event != null)
+                        if (Utils.events.get(Utils.removeColors(event.getName()))) {
+                            if (event.isDoubleDrops())
+                                item.setAmount(item.getAmount() * 2);
 
-                    if (event.isDoubleXp())
-                        expDrop *= 2;
+                            if (event.isDoubleXp())
+                                expDrop *= 2;
+                        }
+
+                    // Modify item amount based on Fortune enchantment
+                    // Adds fortune generated amount to the base amount picked by format
+                    if (applyFortune)
+                        if (tool != null)
+                            item.setAmount(item.getAmount() + Utils.checkFortune(block.getType(), tool));
+
+                    // Drop/Give stuff
+                    if (item.getAmount() > 0)
+                        if (drop.isDropNaturally())
+                            blockLocation.getWorld().dropItemNaturally(blockLocation, item);
+                        else
+                            player.getInventory().addItem(item);
+
+                    if (expDrop > 0)
+                        if (drop.isDropExpNaturally())
+                            blockLocation.getWorld().spawn(blockLocation, ExperienceOrb.class).setExperience(expDrop);
+                        else
+                            player.giveExp(expDrop);
                 }
-
-                // Drop/Give stuff
-                if (item.getAmount() > 0)
-                    if (drop.isDropNaturally())
-                        blockLocation.getWorld().dropItemNaturally(blockLocation, item);
-                    else
-                        player.getInventory().addItem(item);
-
-                if (expDrop > 0)
-                    if (drop.isDropExpNaturally())
-                        blockLocation.getWorld().spawn(blockLocation, ExperienceOrb.class).setExperience(expDrop);
-                    else
-                        player.giveExp(expDrop);
-            }
-        else {
+        } else {
             // MC Drops, why does that sound like a cool name for a hip-hop rapper?
 
             if (block != null) {
                 for (ItemStack item : block.getDrops()) {
-                    if (Utils.events.get(Utils.removeColors(event.getName()))) {
-                        if (event.isDoubleDrops())
-                            item.setAmount(item.getAmount() * 2);
+                    if (event != null)
+                        if (Utils.events.get(Utils.removeColors(event.getName()))) {
 
-                        if (event.isDoubleXp())
-                            expDrop *= 2;
-                    }
+                            if (event.isDoubleDrops())
+                                item.setAmount(item.getAmount() * 2);
+
+                            if (event.isDoubleXp())
+                                expDrop *= 2;
+                        }
+
+                    // Modify item amount based on Fortune enchantment
+                    // Works like Vanilla fortune
+                    if (applyFortune)
+                        if (tool != null)
+                            item.setAmount(Utils.checkFortune(block.getType(), tool));
+
+                    // Above can set to 0, we don't want that here.
+                    if (item.getAmount() == 0)
+                        item.setAmount(1);
 
                     if (expDrop > 0)
                         block.getWorld().spawn(blockLocation, ExperienceOrb.class).setExperience(expDrop);
@@ -178,19 +203,20 @@ public class BlockBR {
         }
 
         // Event item
-        if (Utils.events.get(Utils.removeColors(event.getName()))) {
-            if (event.getDrop() != null) {
-                if (Main.getInstance().getRandom().nextInt(event.getDropRarity()) + 1 == 1) {
-                    ItemStack eventItem = event.getDrop().getItemStack(player);
+        if (event != null)
+            if (Utils.events.get(Utils.removeColors(event.getName()))) {
+                if (event.getDrop() != null) {
+                    if (Main.getInstance().getRandom().nextInt(event.getDropRarity()) + 1 == 1) {
+                        ItemStack eventItem = event.getDrop().getItemStack(player);
 
-                    if (eventItem.getAmount() > 0)
-                        if (event.getDrop().isDropNaturally())
-                            blockLocation.getWorld().dropItemNaturally(blockLocation, eventItem);
-                        else
-                            player.getInventory().addItem(eventItem);
+                        if (eventItem.getAmount() > 0)
+                            if (event.getDrop().isDropNaturally())
+                                blockLocation.getWorld().dropItemNaturally(blockLocation, eventItem);
+                            else
+                                player.getInventory().addItem(eventItem);
+                    }
                 }
             }
-        }
 
         // Money
         int moneyToGive = money.getAmount();
@@ -203,7 +229,6 @@ public class BlockBR {
         }
 
         // Particles
-
         if (Main.getInstance().isOver18())
             showParticle(block);
     }
@@ -213,6 +238,17 @@ public class BlockBR {
     }
 
     public boolean check(Player player) {
+
+        // Permission check
+        if (permission != null)
+            if (!permission.equals(""))
+                if (!player.hasPermission(permission)) {
+                    player.sendMessage(Messages.get("Permission-Error").replace("%permission%", permission));
+                    return false;
+                }
+
+        Main.getInstance().cO.debug("Passed permission check");
+
         // Tools
 
         ItemStack tool;
@@ -341,6 +377,14 @@ public class BlockBR {
         return playerCommands;
     }
 
+    public String getPermission() {
+        return permission;
+    }
+
+    public void setPermission(String permission) {
+        this.permission = permission;
+    }
+
     public void setPlayerCommands(List<String> playerCommands) {
         if (playerCommands == null)
             this.playerCommands = new ArrayList<>();
@@ -440,5 +484,13 @@ public class BlockBR {
 
     public void setRegenerate(boolean regenerate) {
         this.regenerate = regenerate;
+    }
+
+    public boolean isApplyFortune() {
+        return applyFortune;
+    }
+
+    public void setApplyFortune(boolean applyFortune) {
+        this.applyFortune = applyFortune;
     }
 }

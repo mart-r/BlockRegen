@@ -121,6 +121,9 @@ public class FormatHandler {
             block.setRegenTimes(section.getInt("regen-times", 0));
             main.cO.debug(name + ": regenTimes " + block.getRegenTimes());
 
+            block.setApplyFortune(section.getBoolean("apply-fortune", true));
+            main.cO.debug(name + " applyFortune " + block.isApplyFortune());
+
             // Rewards
 
             block.setConsoleCommands(getStringOrList(name, "console-commands", "console-command"));
@@ -171,8 +174,7 @@ public class FormatHandler {
                         if (drop != null) {
                             drop.setId(id);
                             drops.add(drop);
-                        } else
-                            main.cO.debug("Drop not valid, skipping");
+                        } else main.cO.debug("Drop not valid, skipping");
                     }
 
                     block.setDrops(drops);
@@ -190,6 +192,9 @@ public class FormatHandler {
 
             block.setEnchantsRequired(Utils.stringToList(section.getString("enchant-required")));
             main.cO.debug(name + ": enchantsRequired " + block.getEnchantsRequired().toString());
+
+            block.setPermission(section.getString("permission"));
+            main.cO.debug(name + ": permission " + block.getPermission());
 
             if (section.contains("jobs-check")) {
                 block.setJobRequirement(new JobRequirement(section.getString("jobs-check").split(";")[0], Integer.valueOf(section.getString("jobs-check").split(";")[1])));
@@ -237,7 +242,7 @@ public class FormatHandler {
         main.cO.debug("Lore " + drop.getLore().toString());
 
         if (!dropSection.contains("amount"))
-            drop.setAmount(new Amount(1));
+            drop.setAmount(new Amount(0));
         else
             drop.setAmount(loadAmount(dropSection.getCurrentPath() + ".amount"));
 
@@ -248,7 +253,7 @@ public class FormatHandler {
             drop.setDropExpNaturally(dropSection.getBoolean("exp.drop-naturally", false));
 
             if (!dropSection.contains("exp.amount"))
-                drop.setExpAmount(new Amount(1));
+                drop.setExpAmount(new Amount(0));
             else
                 drop.setExpAmount(loadAmount(dropSection.getCurrentPath() + ".exp.amount"));
         } else drop.setExpAmount(new Amount(0));
@@ -261,7 +266,7 @@ public class FormatHandler {
 
         ConfigurationSection section = blocklist.getConfigurationSection(path);
 
-        Amount amount = new Amount(1);
+        Amount amount = new Amount(0);
 
         // Fixed or not?
         try {
@@ -271,8 +276,8 @@ public class FormatHandler {
                 try {
                     amount = new Amount(section.getInt("low"), section.getInt("high"));
                 } catch (NullPointerException e) {
-                    main.cO.err("Amount on path " + path + " is not valid, returning default.");
-                    return new Amount(1);
+                    main.cO.err("Amount on path " + path + " is not valid, returning default. == 0");
+                    return new Amount(0);
                 }
             }
         } catch (NullPointerException e) {
@@ -280,8 +285,8 @@ public class FormatHandler {
             try {
                 amount = new Amount(blocklist.getInt(path));
             } catch (NullPointerException e1) {
-                main.cO.err("Amount on path " + path + " is not valid, returning default.");
-                return new Amount(1);
+                main.cO.err("Amount on path " + path + " is not valid, returning default. == 0");
+                return new Amount(0);
             }
         }
 

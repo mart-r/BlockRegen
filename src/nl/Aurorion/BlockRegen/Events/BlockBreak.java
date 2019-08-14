@@ -5,13 +5,13 @@ import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
 import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
 import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Messages;
-import nl.Aurorion.BlockRegen.System.Getters;
 import nl.Aurorion.BlockRegen.Utils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -64,13 +64,13 @@ public class BlockBreak implements Listener {
         }
 
         // Towny support
-        if (main.getGetters().useTowny())
+        if (main.isUseTowny())
             if (TownyUniverse.getTownBlock(block.getLocation()) != null)
                 if (TownyUniverse.getTownBlock(block.getLocation()).hasTown())
                     return;
 
         // GriefPrevention support
-        if (main.getGetters().useGP()) {
+        if (main.isUseGP()) {
             String noBuildReason = main.getGriefPrevention().allowBreak(player, block, block.getLocation(), event);
 
             if (noBuildReason != null)
@@ -125,9 +125,9 @@ public class BlockBreak implements Listener {
                     return;
                 }
 
-                if (Main.getInstance().isOver18())
+                if (Main.getVersion().contains("1_12") || Main.getVersion().contains("1_10") || Main.getVersion().contains("1_11")) {
                     event.setDropItems(false);
-                else
+                } else
                     event.setCancelled(true);
 
                 event.setExpToDrop(0);
@@ -142,9 +142,9 @@ public class BlockBreak implements Listener {
                         return;
                     }
 
-                    if (Main.getInstance().isOver18())
+                    if (Main.getVersion().contains("1_12") || Main.getVersion().contains("1_10") || Main.getVersion().contains("1_11")) {
                         event.setDropItems(false);
-                    else
+                    } else
                         event.setCancelled(true);
 
                     event.setExpToDrop(0);
@@ -164,7 +164,6 @@ public class BlockBreak implements Listener {
 
     private void blockBreak(Player player, Block block, String blockname, Integer exptodrop, BlockBR blockBR) {
 
-        Getters getters = main.getGetters();
         BlockState state = block.getState();
         Location loc = block.getLocation();
 
@@ -188,35 +187,39 @@ public class BlockBreak implements Listener {
         if (blockBR.isRegenerate()) {
             // Actual Regeneration -------------------------------------------------------------------------------------
 
-            main.cO.debug(Utils.regenTimesBlocks.toString());
+            if (blockBR.getRegenTimes() != 0) {
 
-            // Check for number of regens
-            if (blockBR.getRegenTimes() > 0) {
-                if (Utils.regenTimesBlocks.containsKey(block.getLocation())) {
-                    if ((Utils.regenTimesBlocks.get(block.getLocation()) - 1) <= 0) {
-                        Utils.regenTimesBlocks.remove(block.getLocation());
-                        return;
+                // Check for number of regens
+                if (blockBR.getRegenTimes() > 0) {
+                    if (Utils.regenTimesBlocks.containsKey(block.getLocation())) {
+                        if ((Utils.regenTimesBlocks.get(block.getLocation()) - 1) <= 0) {
+                            Utils.regenTimesBlocks.remove(block.getLocation());
+                            return;
+                        } else
+                            Utils.regenTimesBlocks.put(block.getLocation(), Utils.regenTimesBlocks.get(block.getLocation()) - 1);
                     } else
-                        Utils.regenTimesBlocks.put(block.getLocation(), Utils.regenTimesBlocks.get(block.getLocation()) - 1);
-                } else
-                    Utils.regenTimesBlocks.put(block.getLocation(), blockBR.getRegenTimes() - 1);
+                        Utils.regenTimesBlocks.put(block.getLocation(), blockBR.getRegenTimes() - 1);
+                }
+
+                main.cO.debug("Breaks left: " + Utils.regenTimesBlocks.get(block.getLocation()));
             }
 
-            main.cO.debug("Breaks left: " + Utils.regenTimesBlocks.get(block.getLocation()));
-
             // Data Recovery
-            FileConfiguration data = main.getFiles().getRecoveryData();
+            ConfigurationSection recovery = main.getFiles().getData().getConfigurationSection("Recovery");
+            String blockString = blockname + ";" + blockData;
 
-            if (getters.dataRecovery()) {
+            if (main.isDataRecovery()) {
+                main.cO.debug("Saving " + blockString + " for recovery on " + Utils.locationToString(loc));
 
                 List<String> dataLocs = new ArrayList<>();
 
-                if (data.contains(blockname))
-                    dataLocs = data.getStringList(blockname);
+                if (recovery.contains(blockString))
+                    dataLocs = recovery.getStringList(blockString);
 
                 dataLocs.add(Utils.locationToString(loc));
-                data.set(blockname, dataLocs);
-                main.getFiles().saveRecoveryData();
+
+                recovery.set(blockString, dataLocs);
+                main.getFiles().saveData();
             }
 
             // Add the regen process
@@ -229,19 +232,23 @@ public class BlockBreak implements Listener {
 
                     Utils.clearProcess(loc);
 
-                    if (data != null && data.contains(blockname)) {
-                        List<String> dataLocs = data.getStringList(blockname);
-                        if (dataLocs != null && !dataLocs.isEmpty()) {
-                            dataLocs.remove(Utils.locationToString(loc));
-                            data.set(blockname, dataLocs);
-                            main.getFiles().saveRecoveryData();
+                    if (main.isDataRecovery())
+                        if (recovery.contains(blockString)) {
+
+                            List<String> dataLocs = recovery.getStringList(blockString);
+
+                            if (dataLocs != null && !dataLocs.isEmpty()) {
+                                dataLocs.remove(Utils.locationToString(loc));
+
+                                recovery.set(blockString, dataLocs);
+
+                                main.getFiles().saveData();
+                            }
                         }
-                    }
                 }
             }.runTaskLater(main, regenDelay * 20);
 
             Utils.addProcess(loc, task, blockType, blockData);
-            main.cO.debug(Utils.regenTimesBlocks.toString());
         }
     }
 }

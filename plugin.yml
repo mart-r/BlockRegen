@@ -1,9 +1,8 @@
 name: BlockRegen
 main: nl.Aurorion.BlockRegen.Main
-version: 3.6.0
+version: 3.6.0-LEGACY-b4
 authors: [Aurorion, Wertik1206]
-softdepend: [Vault, WorldEdit, Towny, Jobs, GriefPrevention]
-
+softdepend: [Vault, WorldEdit, Towny, Jobs, GriefPrevention, Multiverse-Core]
 commands:
   blockregen:
     aliases: [br]

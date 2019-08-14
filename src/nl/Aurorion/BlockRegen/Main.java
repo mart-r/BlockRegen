@@ -1,6 +1,7 @@
 package nl.Aurorion.BlockRegen;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import net.milkbowl.vault.economy.Economy;
 import nl.Aurorion.BlockRegen.Commands.Commands;
@@ -16,12 +17,15 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.boss.BossBar;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -35,13 +39,14 @@ public class Main extends JavaPlugin {
     }
 
     private Economy econ;
-    private WorldEditPlugin worldEdit;
+    public WorldEditPlugin worldEdit;
+    public WorldGuardPlugin worldGuard;
+
     private GriefPrevention griefPrevention;
 
     private Files files;
 
     private ParticleUtil particleUtil;
-    private Getters getters;
     private EnchantUtil enchantUtil;
 
     private Random random;
@@ -74,6 +79,20 @@ public class Main extends JavaPlugin {
         return placeholderAPI;
     }
 
+    private boolean useGP;
+    private boolean updateChecker;
+    private boolean useTowny;
+    private boolean dataRecovery;
+
+    private void loadOptions() {
+        useGP = files.getSettings().getBoolean("GriefPrevention-Support");
+        if (files.getSettings().get("Update-Checker") != null)
+            updateChecker = files.getSettings().getBoolean("Update-Checker");
+        else updateChecker = false;
+        dataRecovery = files.getSettings().getBoolean("Data-Recovery");
+        useTowny = files.getSettings().getBoolean("Towny-Support");
+    }
+
     @Override
     public void onEnable() {
         instance = this;
@@ -82,8 +101,10 @@ public class Main extends JavaPlugin {
 
         // Setup ConsoleOutput
         cO = new ConsoleOutput(this);
-        cO.setDebug(files.settings.getBoolean("Debug-Enabled", false));
-        cO.setPrefix(Utils.color(files.messages.getString("Messages.Prefix")));
+        cO.setDebug(files.settings.getConfig().getBoolean("Debug-Enabled", false));
+        cO.setPrefix(Utils.color(files.messages.getConfig().getString("Messages.Prefix")));
+
+        loadOptions();
 
         // Versions, just to remove the need to check every, single, time.
 
@@ -96,18 +117,18 @@ public class Main extends JavaPlugin {
 
         formatHandler = new FormatHandler(this);
 
-        registerCommands();
         registerEvents();
 
         Messages.load();
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            cO.info("&eFound PAPI! &aHooking!");
+            cO.info("Found PAPI! &aHooking!");
             placeholderAPI = true;
         }
 
         setupEconomy();
         setupWorldEdit();
+        setupWorldGuard();
         checkForPlugins();
 
         Utils.fillFireworkColors();
@@ -115,7 +136,7 @@ public class Main extends JavaPlugin {
 
         enableMetrics();
 
-        if (getGetters().updateChecker()) {
+        if (updateChecker) {
             getServer().getScheduler().runTaskLaterAsynchronously(this, () -> {
                 UpdateCheck updater = new UpdateCheck(this, 9885);
 
@@ -129,30 +150,86 @@ public class Main extends JavaPlugin {
         }
 
         cO.info("Loading breaks..");
-        FileConfiguration data = getFiles().getData();
-        data.getKeys(false).forEach(locString -> Utils.regenTimesBlocks.put(Utils.stringToLocation(locString), data.getInt(locString)));
 
+        // Load regen times
+        FileConfiguration data = getFiles().getData();
+
+        if (data.contains("Regen-Times"))
+            for (String dataString : data.getStringList("Regen-Times")) {
+                Location loc = Utils.stringToLocation(dataString.split(":")[0]);
+                int value = Integer.parseInt(dataString.split(":")[1]);
+                Utils.regenTimesBlocks.put(loc, value);
+            }
+        else data.createSection("Regen-Times");
+
+        // Commands moved here, don't want them registered without the plugin loading fine, thanks mibby.
+        registerCommands();
+
+        // And we're all done
         cO.info("§aDone loading.");
 
-        cO.info("You are using version " + getDescription().getVersion());
-        cO.info("Report bugs or suggestions to discord only.");
-        cO.info("Always backup if you are not sure about things.");
+        cO.info("&fYou are using development version &7v.&6" + getDescription().getVersion());
+        cO.info("Bug reports and suggestions are accepted on discord only.");
+        cO.info("Last warning before using it, can contain errors.");
+        cO.info("Doesn't matter, it's already too late, enjoy the ride. &c;)");
+    }
+
+    public void reload(CommandSender sender) {
+        instance = this;
+
+        files.reload();
+        loadOptions();
+        sender.sendMessage("§7Reloaded files..");
+
+        // Setup ConsoleOutput
+        cO = new ConsoleOutput(this);
+        cO.setDebug(files.settings.getConfig().getBoolean("Debug-Enabled", false));
+        cO.setPrefix(Utils.color(files.messages.getConfig().getString("Messages.Prefix")));
+
+        Utils.bars.clear();
+        Utils.events.clear();
+
+        setupEconomy();
+        setupWorldEdit();
+        setupWorldGuard();
+        checkForPlugins();
+
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            sender.sendMessage("§eFound PAPI! §aHooking!");
+            placeholderAPI = true;
+        }
+
+        sender.sendMessage("§7Searched for dependencies..");
+
+        enchantUtil = new EnchantUtil();
+
+        Messages.load();
+
+        formatHandler.reload();
+        sender.sendMessage("§7Loaded formats..");
     }
 
     @Override
     public void onDisable() {
         getServer().getScheduler().cancelTasks(this);
 
-        if (!getGetters().dataRecovery() && !Utils.regenProcesses.isEmpty()) {
+        if (!dataRecovery && !Utils.regenProcesses.isEmpty())
             for (RegenProcess regenProcess : Utils.regenProcesses)
                 regenProcess.getLoc().getBlock().setType(regenProcess.getMaterial());
-        }
 
         for (BossBar bossBar : Utils.bars.values())
             bossBar.removeAll();
 
-        Utils.regenTimesBlocks.keySet().forEach(loc -> getFiles().getData().set(Utils.locationToString(loc), Utils.regenTimesBlocks.get(loc)));
+        // Save regenTimes
+        FileConfiguration data = getFiles().getData();
+        List<String> regenTimes = new ArrayList<>();
 
+        for (Location loc : Utils.regenTimesBlocks.keySet())
+            regenTimes.add(Utils.locationToString(loc) + ":" + Utils.regenTimesBlocks.get(loc));
+
+        data.set("Regen-Times", regenTimes);
+
+        // Save all data
         getFiles().saveData();
 
         instance = null;
@@ -160,7 +237,6 @@ public class Main extends JavaPlugin {
 
     private void registerClasses() {
         particleUtil = new ParticleUtil(this);
-        getters = new Getters(this);
         random = new Random();
 
         enchantUtil = new EnchantUtil();
@@ -188,24 +264,24 @@ public class Main extends JavaPlugin {
     // ??
     private void checkForPlugins() {
         if (this.getJobs())
-            cO.info("&eJobs found! &aEnabling Jobs fuctions.");
+            cO.info("Jobs found! &aEnabling Jobs fuctions.");
     }
 
     private boolean setupEconomy() {
         if (this.getServer().getPluginManager().getPlugin("Vault") == null) {
-            cO.info("&eDidn't found Vault. &cEconomy functions disabled.");
+            cO.info("Didn't found Vault. &cEconomy functions disabled.");
             return false;
         }
 
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
 
         if (rsp == null) {
-            cO.info("&eVault found, but no economy plugin. &cEconomy functions disabled.");
+            cO.info("Vault found, but no economy plugin. &cEconomy functions disabled.");
             return false;
         }
 
         econ = rsp.getProvider();
-        cO.info("&eVault & economy plugin found! &aEnabling economy functions.");
+        cO.info("Vault & economy plugin found! &aEnabling economy functions.");
         return econ != null;
     }
 
@@ -213,13 +289,26 @@ public class Main extends JavaPlugin {
         Plugin worldeditplugin = this.getServer().getPluginManager().getPlugin("WorldEdit");
 
         if (worldeditplugin == null || !(worldeditplugin instanceof WorldEditPlugin)) {
-            cO.info("&eDidn't found WorldEdit. &cRegion functions disabled.");
+            cO.info("Didn't found WorldEdit. &cRegion functions disabled.");
             return false;
         }
 
-        cO.info("&eWorldEdit found! &aEnabling region fuctions.");
+        cO.info("WorldEdit found! &aEnabling region fuctions.");
         worldEdit = (WorldEditPlugin) worldeditplugin;
         return worldEdit != null;
+    }
+
+    private boolean setupWorldGuard() {
+        Plugin worldGuardPlugin = getServer().getPluginManager().getPlugin("WorldGuard");
+
+        if (worldGuardPlugin == null || !(worldGuardPlugin instanceof WorldGuardPlugin)) {
+            cO.info("Did not find WorldGuard. &cNo need to support it.");
+            return false;
+        }
+
+        cO.info("WorldGuard Found! &aEnabling WG to BR command.");
+        worldGuard = (WorldGuardPlugin) worldGuardPlugin;
+        return worldGuard != null;
     }
 
     //-------------------- Getters --------------------------
@@ -247,37 +336,55 @@ public class Main extends JavaPlugin {
         return this.particleUtil;
     }
 
-    public Getters getGetters() {
-        return this.getters;
-    }
-
     public Random getRandom() {
         return this.random;
     }
 
     private void recoveryCheck() {
-        if (getGetters().dataRecovery()) {
-            Set<String> set = files.getRecoveryData().getKeys(false);
+        if (dataRecovery) {
+            ConfigurationSection recovery = files.getData().getConfigurationSection("Recovery");
+
+            Set<String> set = recovery.getKeys(false);
+
             if (!set.isEmpty()) {
+
                 cO.info("Recovering blocks..");
+
                 while (set.iterator().hasNext()) {
-                    String name = set.iterator().next();
-                    List<String> list = files.getRecoveryData().getStringList(name);
-                    for (String s : list) {
-                        Location loc = Utils.stringToLocation(s);
-                        loc.getBlock().setType(Material.valueOf(name));
-                        cO.debug("Recovered " + name + " on position " + Utils.locationToString(loc));
+
+                    String blockString = set.iterator().next();
+
+                    List<String> list = recovery.getStringList(blockString);
+
+                    if (list.isEmpty()) {
+                        set.remove(blockString);
+                        recovery.set(blockString, null);
+                        continue;
                     }
-                    set.remove(name);
+
+                    while (list.iterator().hasNext()) {
+                        String locString = list.iterator().next();
+                        Location loc = Utils.stringToLocation(locString);
+
+                        if (loc.getWorld() == null) {
+                            cO.err("Could not recover due to a missing world.");
+                            continue;
+                        }
+
+                        loc.getBlock().setType(Material.valueOf(blockString.split(";")[0].toUpperCase()));
+                        loc.getBlock().setData(Byte.valueOf(blockString.split(";")[1]));
+
+                        cO.debug("Recovered " + blockString + " on position " + Utils.locationToString(loc));
+                        list.remove(locString);
+                    }
+
+                    set.remove(blockString);
+                    recovery.set(blockString, list);
                 }
                 cO.info("Done.");
             }
 
-            for (String key : files.getRecoveryData().getKeys(false)) {
-                files.getRecoveryData().set(key, null);
-            }
-
-            files.saveRecoveryData();
+            files.saveData();
         }
     }
 
@@ -294,5 +401,25 @@ public class Main extends JavaPlugin {
 
     public FormatHandler getFormatHandler() {
         return formatHandler;
+    }
+
+    public boolean isUseRegenTimes() {
+        return useRegenTimes;
+    }
+
+    public boolean isUseGP() {
+        return useGP;
+    }
+
+    public boolean isUpdateChecker() {
+        return updateChecker;
+    }
+
+    public boolean isUseTowny() {
+        return useTowny;
+    }
+
+    public boolean isDataRecovery() {
+        return dataRecovery;
     }
 }

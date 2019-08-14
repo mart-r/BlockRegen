@@ -9,14 +9,18 @@ Blocks:
     replace-block: STONE
     regen-delay: 3
     money: 100
-    # Set to 0 to disabled
+    # Set to 0 to disable
     # Number of times you can break the block until it won't regen. Requested by @ryandawn#0745
     regen-times: 5
+    # Will the block regen? Defaults to true if removed.
     regenerate: true
+    # Commands run by console when the block is broken successfully
     console-command: 'say The console-command function is working!'
+    # Commands run by the player
     player-command: 'me I, %player%, executed this command'
     tool-required: 'DIAMOND_PICKAXE, IRON_PICKAXE'
     enchant-required: 'FORTUNE, MENDING'
+    # Particles: flame_crown, fireworks, witch_spell
     particles: flame_crown
     natural-break: false
     drop-item:
@@ -146,3 +150,20 @@ Blocks:
       bossbar:
         color: YELLOW
         title: '&7Event %event% &7is active!'
+  # The only options needed to have a basic ore node
+  IRON_ORE:
+    replace-block: STONE
+    natural-break: true
+  # 3.6.0-LEGACY-b4 Added fortune integration, permission condition, new command system, fromWG command, fixed bugs
+  DIAMOND_BLOCK:
+    replace-block: STAINED_GLASS;1
+    natural-break: false
+    # Whether or not apply fortune, defaults to true
+    apply-fortune: true
+    # Permission the player needs to have in order to mine this block
+    permission: 'whatever.u.want'
+    drop-items:
+      material: diamond
+      amount:
+        low: 1
+        high: 3
