@@ -351,7 +351,7 @@ public class Main extends JavaPlugin {
         if (dataRecovery) {
 
             // Section is created on file startup
-            ConfigurationSection section = files.getData().getConfigurationSection("Recovery");
+            ConfigurationSection section = files.getData().contains("Recovery") ? files.getData().getConfigurationSection("Recovery") : files.getData().createSection("Recovery");
 
             Set<String> blockTypes = section.getKeys(false);
 

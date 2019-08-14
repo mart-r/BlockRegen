@@ -79,6 +79,11 @@ public class Commands implements CommandExecutor, Listener {
 
         Player player;
 
+        if (!sender.hasPermission("blockregen.admin")) {
+            sender.sendMessage(Messages.get("Insufficient-Permission"));
+            return true;
+        }
+
         switch (args[0].toLowerCase()) {
             case "reload":
                 main.reload(sender);
@@ -131,11 +136,6 @@ public class Commands implements CommandExecutor, Listener {
                 }
 
                 player = (Player) sender;
-
-                if (!player.hasPermission("blockregen.admin")) {
-                    player.sendMessage(Messages.get("Console-Sender-Error"));
-                    return true;
-                }
 
                 ConfigurationSection regions = main.getFiles().getRegions().getConfigurationSection("Regions");
 

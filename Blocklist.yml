@@ -5,6 +5,7 @@
 # Material list: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html
 
 Blocks:
+  # 3.5.0 Example, check below for examples of newer version features!
   # The block that gets broken
   DIAMOND_ORE:
     # The block to replace it with.
@@ -118,6 +119,10 @@ Blocks:
           - "&aQuack quack quack"
         drop-naturally: true
         rarity: 10
+  # The only options needed to have a basic ore node
+  IRON_ORE:
+    replace-block: STONE
+    natural-break: true
   # Example for 3.6.0-b1, old formatting still works, no changes needed to upgrade from lower plugin versions.
   GOLD_ORE:
     # Has to be present for the block format to work, everything else can be removed.
@@ -166,10 +171,10 @@ Blocks:
           amount:
             low: 0
             high: 1
-        boulder:
-          material: STONE
-          # Fixed amount
-          amount: 1
+      boulder:
+        material: STONE
+        # Fixed amount
+        amount: 1
     # No major changes in events
     event:
       # Only the name is needed in order for the event to work.

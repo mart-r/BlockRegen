@@ -212,8 +212,7 @@ public class BlockBR {
      */
 
     public boolean check(Player player) {
-        // Permission
-
+        //------------------------------------- Permission check -------------------------------------
         if (!permission.equals(""))
             if (!player.hasPermission(permission)) {
                 player.sendMessage(Messages.get("Permission-Error").replace("%permission%", permission));
