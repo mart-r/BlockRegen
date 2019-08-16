@@ -99,7 +99,13 @@ public class BlockBR {
 
     public void reward(Player player, Block block, int expDrop, Location... loc) {
         Location blockLocation;
-        ItemStack tool = player.getInventory().getItemInMainHand();
+
+        ItemStack tool;
+
+        if (Main.getInstance().isOver18())
+            tool = player.getInventory().getItemInMainHand();
+        else
+            tool = player.getItemInHand();
 
         if (block != null)
             blockLocation = block.getLocation();

@@ -37,7 +37,7 @@ public class Commands implements CommandExecutor, Listener {
 
     private void help(CommandSender s, String label) {
         s.sendMessage("§8§m        §r §3BlockRegen §7v.§f" + main.getDescription().getVersion() + " §8§m        "
-                + "\n§3/" + label + " reload §8- §7Reload the Settings.yml, Messages.yml and Blocklist.yml, also generates Recovery.yml if needed."
+                + "\n§3/" + label + " reload §8- §7Reload the Settings.yml, Messages.yml and Blocklist.yml."
                 + "\n§3/" + label + " bypass §8- §7Bypass the events."
                 + "\n§3/" + label + " check §8- §7Check the type of the block to put in the blocklist."
                 + "\n§3/" + label + " region §8- §7All the info to set a region."
