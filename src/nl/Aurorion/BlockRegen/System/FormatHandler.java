@@ -1,9 +1,6 @@
 package nl.Aurorion.BlockRegen.System;
 
-import nl.Aurorion.BlockRegen.BlockFormat.Amount;
-import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
-import nl.Aurorion.BlockRegen.BlockFormat.Drop;
-import nl.Aurorion.BlockRegen.BlockFormat.EventBR;
+import nl.Aurorion.BlockRegen.BlockFormat.*;
 import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Particles.ParticleBR;
 import nl.Aurorion.BlockRegen.Utils;
@@ -28,8 +25,6 @@ public class FormatHandler {
         this.main = main;
 
         blocklist = main.getFiles().getBlocklist();
-
-        loadBlocks();
     }
 
     public void reload() {
@@ -40,8 +35,9 @@ public class FormatHandler {
 
     public BlockBR getBlockBRByEvent(String eventName) {
         for (BlockBR blockBR : blocks.values()) {
-            if (Utils.removeColors(blockBR.getEvent().getName()).equals(eventName))
-                return blockBR;
+            if (blockBR.getEvent() != null)
+                if (Utils.removeColors(blockBR.getEvent().getName()).equals(eventName))
+                    return blockBR;
         }
         return null;
     }
@@ -63,16 +59,18 @@ public class FormatHandler {
         blocks = new HashMap<>();
 
         main.cO.info("Starting to load block formats..");
-        for (String name : blocklist.getConfigurationSection("Blocks").getKeys(false)) {
-            BlockBR block = loadBlock(name);
-            if (block != null) {
-                blocks.put(name, block);
-                main.cO.debug("Loaded " + name);
+
+        if (blocklist.contains("Blocks"))
+            for (String name : blocklist.getConfigurationSection("Blocks").getKeys(false)) {
+                BlockBR block = loadBlock(name);
+                if (block != null) {
+                    blocks.put(name, block);
+                    main.cO.debug("Loaded " + name);
+                }
             }
-        }
+
         main.cO.info("Loaded " + blocks.size() + " block format(s) and " + Utils.events.size() + " event(s).");
     }
-
 
     /**
      * Loads BlockBR from Blocklist.yml, null if invalid
@@ -98,7 +96,7 @@ public class FormatHandler {
         main.cO.debug(name + " isRegenerate " + block.isRegenerate());
 
         // Not needed, 0 by default
-        block.setRegenDelay(section.getInt("regen-delay", 3));
+        block.setRegenDelay(loadAmount(section.getCurrentPath() + ".regen-delay", 0));
         main.cO.debug(name + " regenDelay " + block.getRegenDelay());
 
         // false by default
@@ -189,10 +187,20 @@ public class FormatHandler {
             main.cO.debug(block.getDrops().toString());
         } else block.setDrops(drops);
 
+        if (section.contains("job-rewards"))
+            if (main.useJobs()) {
+                block.setJobRewards(loadJobRewards(section.getCurrentPath() + ".job-rewards"));
+            } else
+                main.cO.warn("Jobs were not hooked, skipping jobs requirement.");
+
         // Conditions
+
+        // Tools
 
         block.setToolsRequired(Utils.stringToList(section.getString("tool-required")));
         main.cO.debug(name + " toolsRequired " + block.getToolsRequired().toString());
+
+        // Permission
 
         block.setPermission(section.getString("permission", ""));
         main.cO.debug(name + " permission " + block.getPermission());
@@ -202,8 +210,13 @@ public class FormatHandler {
         block.setEnchantsRequired(Utils.stringToList(section.getString("enchant-required")));
         main.cO.debug(name + " enchantsRequired " + block.getEnchantsRequired().toString());
 
-        if (section.contains("jobs-check") && main.getJobs())
-            block.setJobRequirements(Utils.stringToList(section.getString("jobs-check")));
+        // Jobs requirement
+
+        if (section.contains("jobs-check"))
+            if (main.useJobs())
+                block.setJobRequirements(Utils.stringToList(section.getString("jobs-check")));
+            else
+                main.cO.warn("Jobs were not hooked, skipping jobs requirement.");
 
         // Events
         if (section.contains("event"))
@@ -248,8 +261,10 @@ public class FormatHandler {
         Drop drop = new Drop(dropSection.getString("material"));
 
         // Invalid == null
-        if (!drop.isValid())
+        if (!drop.isValid()) {
+            main.cO.warn("Material on path " + dropSection.getCurrentPath() + " is not valid.");
             return null;
+        }
 
         main.cO.debug("Loading drop on path '" + path + "'");
 
@@ -263,6 +278,11 @@ public class FormatHandler {
 
         drop.setLore(getStringOrList(path.replace("Blocks.", ""), "lore", "lores"));
         main.cO.debug("lore " + drop.getLore().toString());
+
+        if (dropSection.contains("head-owner")) {
+            drop.setHeadOwner(dropSection.getString("head-owner"));
+            main.cO.debug("headOwner " + drop.getHeadOwner());
+        }
 
         if (!dropSection.contains("amount"))
             drop.setAmount(new Amount(1));
@@ -292,7 +312,7 @@ public class FormatHandler {
      * @return Amount
      */
 
-    private Amount loadAmount(String path, int defaultValue) {
+    public Amount loadAmount(String path, int defaultValue) {
 
         ConfigurationSection section = blocklist.getConfigurationSection(path);
 
@@ -375,6 +395,23 @@ public class FormatHandler {
         return eventBR;
     }
 
+    private List<JobReward> loadJobRewards(String path) {
+        ConfigurationSection section = blocklist.getConfigurationSection(path);
+
+        List<JobReward> jobRewards = new ArrayList<>();
+
+        for (String name : section.getKeys(false)) {
+            JobReward jobReward = new JobReward(name, section.getDouble(name));
+
+            if (jobReward.isValid())
+                jobRewards.add(jobReward);
+            else
+                main.cO.warn("Job reward at " + section.getCurrentPath() + "." + name + " is not valid.");
+        }
+
+        return jobRewards;
+    }
+
     // Load new particle system configuration
     private ParticleBR loadParticle(String path) {
         ConfigurationSection section = blocklist.getConfigurationSection(path);
@@ -439,5 +476,9 @@ public class FormatHandler {
 
     public HashMap<String, BlockBR> getBlocks() {
         return blocks;
+    }
+
+    public List<String> getTypes() {
+        return new ArrayList<>(blocks.keySet());
     }
 }

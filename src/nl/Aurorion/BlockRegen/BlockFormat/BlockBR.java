@@ -14,13 +14,16 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class BlockBR {
-
     // Misc
 
     // Materials, checked on load, cannot be null when already loaded to cache
@@ -34,7 +37,7 @@ public class BlockBR {
     private int regenTimes;
 
     // Default: 3s
-    private int regenDelay;
+    private Amount regenDelay;
 
     // Default: false
     private boolean naturalBreak;
@@ -67,6 +70,9 @@ public class BlockBR {
     // Item drops
     private List<Drop> drops = new ArrayList<>();
 
+    // Job Exp rewards
+    private List<JobReward> jobRewards = new ArrayList<>();
+
     // On-regen rewards
     private List<String> onRegenConsoleCommands = new ArrayList<>();
 
@@ -92,9 +98,9 @@ public class BlockBR {
     /**
      * A 'format' which the plugin follows when taking action
      *
-     * @param blockType type of block in string
+     * @param blockType    type of block in string
      * @param replaceBlock type of block which to repalce with in string
-     * */
+     */
 
     public BlockBR(String blockType, String replaceBlock) {
         try {
@@ -107,7 +113,7 @@ public class BlockBR {
 
         try {
             this.replaceBlock = Material.valueOf(replaceBlock.toUpperCase());
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NullPointerException e) {
             Main.getInstance().cO.warn("Material " + replaceBlock + "is not valid, skipping the whole block..");
             valid = false;
             return;
@@ -171,15 +177,20 @@ public class BlockBR {
                     levelStr = str.split(";")[1];
             }
 
-            if (jobName == "" || Jobs.getJob(jobName) == null) {
-                Main.getInstance().cO.warn("Job name in job requirement for block " + blockType.toString() + " is not valid, skipping..");
+            try {
+                if (jobName.equals("") || Jobs.getJob(jobName) == null) {
+                    Main.getInstance().cO.warn("Job name in job requirement for block " + blockType.toString() + " is not valid, skipping..");
+                    continue;
+                }
+            } catch (NullPointerException e) {
+                Main.getInstance().cO.warn("Attempted to add jobs requirement when Jobs are not loaded, skipping it.");
                 continue;
             }
 
             int level;
 
             try {
-                level = Integer.valueOf(levelStr);
+                level = Integer.parseInt(levelStr);
             } catch (NumberFormatException e) {
                 Main.getInstance().cO.warn("Job level in job requirement for block " + blockType.toString() + " is not valid, using 0..");
                 level = 0;
@@ -212,10 +223,12 @@ public class BlockBR {
      */
 
     public boolean check(Player player) {
+
         //------------------------------------- Permission check -------------------------------------
         if (!permission.equals(""))
             if (!player.hasPermission(permission)) {
                 player.sendMessage(Messages.get("Permission-Error").replace("%permission%", permission));
+                Main.getInstance().cO.debug("Failed on permission check");
                 return false;
             }
 
@@ -227,17 +240,10 @@ public class BlockBR {
 
         if (toolsRequired != null)
             if (!toolsRequired.isEmpty()) {
-                if (player.getInventory().getItemInMainHand() == null) {
-                    player.sendMessage(Messages.get("Tool-Required-Error").replace("%tool%", Utils.listToString(toolsRequired, "§f, §7", "§cNo tools set")));
-                    Main.getInstance().cO.debug("Tool check failed");
-                    return false;
-                }
-
                 if (!toolsRequired.contains(tool.getType().toString().toUpperCase())) {
-                    Main.getInstance().cO.debug("Tool check failed");
-
                     player.sendMessage(Messages.get("Tool-Required-Error").replace("%tool%", Utils.listToString(toolsRequired, "§f, §7", "§cNo tools set")));
 
+                    Main.getInstance().cO.debug("Tool check failed");
                     return false;
                 }
             } else
@@ -254,31 +260,34 @@ public class BlockBR {
             for (String enchant : enchantsRequired) {
                 Enchantment enchantment = Main.getInstance().getEnchantUtil().get(enchant.split(";")[0]);
 
-                if (tool.getItemMeta().hasEnchant(enchantment)) {
-                    if (enchant.contains(";"))
-                        if (tool.getItemMeta().getEnchantLevel(enchantment) >= Integer.valueOf(enchant.split(";")[1])) {
-                            ep = true;
-                            break;
-                        } else
-                            continue;
+                if (tool.hasItemMeta())
+                    if (tool.getItemMeta().hasEnchant(enchantment)) {
+                        if (enchant.contains(";"))
+                            if (tool.getItemMeta().getEnchantLevel(enchantment) >= Integer.parseInt(enchant.split(";")[1])) {
+                                ep = true;
+                                break;
+                            } else
+                                continue;
 
-                    ep = true;
-                    Main.getInstance().cO.debug("Enchant check passed");
-                    break;
-                }
+                        ep = true;
+                        break;
+                    }
             }
 
             if (!ep) {
-                Main.getInstance().cO.debug("Enchant check failed");
                 player.sendMessage(Messages.get("Enchant-Required-Error").replace("%enchant%", Utils.listToString(enchantsRequired, "§f, §7", "§cNo enchants set")));
+
+                Main.getInstance().cO.debug("Enchant check failed");
                 return false;
             }
         } else
             Main.getInstance().cO.debug("Skipping enchant check");
 
+        Main.getInstance().cO.debug("Enchant check passed");
+
         //------------------------------------- Jobs -------------------------------------
 
-        if (Main.getInstance().getJobs() && jobRequirements != null) {
+        if (Main.getInstance().useJobs() && jobRequirements != null) {
             if (!jobRequirements.isEmpty()) {
                 boolean jp = true;
 
@@ -295,28 +304,28 @@ public class BlockBR {
                             Main.getInstance().cO.debug("Missing the level, " + jobs.get(i).getLevel() + " < " + jobReq.getLevel());
                             jp = false;
                         }
-                    } else {
+                    } else
                         jp = false;
-                        Main.getInstance().cO.debug("Missing the job..");
-                    }
                     i++;
                 }
 
-                Main.getInstance().cO.debug(String.valueOf(jp));
-
                 HashMap<String, String> jobReqs = new HashMap<>();
+
                 for (JobRequirement jobReq : jobRequirements)
                     jobReqs.put(jobReq.getJob(), String.valueOf(jobReq.getLevel()));
 
                 if (!jp) {
-                    player.sendMessage(Messages.get("Jobs-Error").replace("%jobs%", Utils.mapToString(jobReqs, ", ", ";", "§cNo job requirements set.")));
+                    player.sendMessage(Messages.get("Jobs-Error").replace("%jobs%", Utils.mapToString(jobReqs, "§f, §7", " ", "§4NaN")));
+
+                    Main.getInstance().cO.debug("Jobs check failed");
                     return false;
                 }
             }
         }
 
-        Main.getInstance().cO.debug("Norminal, pass");
+        Main.getInstance().cO.debug("Jobs check passed");
 
+        Main.getInstance().cO.debug("Everything 'norminal', go on with regeneration.");
         return true;
     }
 
@@ -344,7 +353,7 @@ public class BlockBR {
 
         //------------------------------------- Command and Messages -------------------------------------
 
-        // Parsing sand firing console commands
+        // Parsing and firing console commands
         if (!consoleCommands.isEmpty())
             for (String command : consoleCommands) {
                 // Utils.parse uses PlaceholderAPI integration, if possible
@@ -374,6 +383,8 @@ public class BlockBR {
                 player.sendMessage(line);
             }
 
+        Main.getInstance().cO.debug("Command and messages fired");
+
         //------------------------------------- Item & EXP Drops -------------------------------------
 
         // Go with vanilla drops?
@@ -391,19 +402,53 @@ public class BlockBR {
                     // Apply event boosters
                     if (drop.isApplyEvents())
                         if (event != null)
-                            if (Utils.events.get(Utils.removeColors(event.getName()))) {
-                                if (event.isDoubleDrops())
-                                    item.setAmount(item.getAmount() * 2);
+                            if (Utils.events.containsKey(event.getName()))
+                                if (Utils.events.get(Utils.removeColors(event.getName()))) {
+                                    if (event.isDoubleDrops())
+                                        item.setAmount(item.getAmount() * 2);
 
-                                if (event.isDoubleXp())
-                                    expDrop *= 2;
-                            }
+                                    if (event.isDoubleXp())
+                                        expDrop *= 2;
+                                }
 
                     // Modify item amount based on Fortune enchantment
                     // Adds fortune generated amount to the base amount picked by block format
                     if (applyFortune)
-                        if (tool != null)
-                            item.setAmount(item.getAmount() + Utils.checkFortune(block.getType(), tool));
+                        item.setAmount(item.getAmount() + Utils.checkFortune(block.getType(), tool));
+
+                    // Set texture, if the material is a player head
+                    if (drop.getMaterial().equals(Material.PLAYER_HEAD)) {
+                        ItemMeta savedMeta = item.getItemMeta();
+
+                        Main.getInstance().cO.debug("Creating a player head..");
+
+                        if (drop.getHeadOwner() != null) {
+                            if (drop.getHeadOwner().equalsIgnoreCase("%player%")) {
+                                SkullMeta meta = (SkullMeta) item.getItemMeta();
+
+                                meta.setOwningPlayer(player);
+                                item.setItemMeta(meta);
+                            } else {
+                                // Get head
+                                if (drop.getHeadOwner().startsWith("url:"))
+                                    Utils.itemWithUrl(item, drop.getHeadOwner().replace("url:", ""));
+                                else if (drop.getHeadOwner().startsWith("base64:"))
+                                    Utils.itemWithBase64(item, drop.getHeadOwner().replace("base64:", ""));
+                                else if (drop.getHeadOwner().startsWith("uuid:"))
+                                    try {
+                                        Utils.itemWithUuid(item, UUID.fromString(drop.getHeadOwner().replace("uuid:", "")));
+                                    } catch (IllegalArgumentException e) {
+                                        Main.getInstance().cO.warn("Invalid UUID format: " + drop.getHeadOwner());
+                                    }
+                                else if (drop.getHeadOwner().startsWith("surl:"))
+                                    Utils.itemWithUrl(item, "http://textures.minecraft.net/texture/" + drop.getHeadOwner().replace("surl:", ""));
+                                else
+                                    Main.getInstance().cO.warn("Invalid head-owner format.");
+                            }
+                        }
+
+                        item = Utils.copyMeta(item, savedMeta);
+                    }
 
                     // Drop Item
                     if (item.getAmount() > 0)
@@ -441,8 +486,7 @@ public class BlockBR {
                     // Modify item amount based on Fortune enchantment
                     // Works like Vanilla fortune
                     if (applyFortune)
-                        if (tool != null)
-                            item.setAmount(Utils.checkFortune(block.getType(), tool));
+                        item.setAmount(Utils.checkFortune(block.getType(), tool));
 
                     // Above can set to 0, we don't want that here.
                     if (item.getAmount() == 0)
@@ -458,7 +502,10 @@ public class BlockBR {
                 }
         }
 
+        Main.getInstance().cO.debug("Drops given");
+
         //------------------------------------- Special Event Item -------------------------------------
+
         if (event != null)
             if (Utils.events.get(Utils.removeColors(event.getName())) && event.getDrop() != null && event.isDropEnabled() && Main.getInstance().getRandom().nextInt(event.getDropRarity()) + 1 == 1) {
                 ItemStack eventItem = event.getDrop().getItemStack(player);
@@ -473,7 +520,10 @@ public class BlockBR {
                         player.getInventory().addItem(eventItem);
             }
 
+        Main.getInstance().cO.debug("Events rewarded if present");
+
         //------------------------------------- Vault money -------------------------------------
+
         if (money != null) {
             // Fetch amount
             int moneyToGive = money.getAmount();
@@ -488,14 +538,25 @@ public class BlockBR {
             }
         }
 
+        //------------------------------------- Jobs exp -------------------------------------
+
+        if (Main.getInstance().useJobs())
+            if (!jobRewards.isEmpty())
+                for (JobReward reward : jobRewards)
+                    reward.reward(player);
+
         //------------------------------------- Particles -------------------------------------
 
         // We still support both options, three base types from older versions & new particleBR system
-        if (particle != null)
+        if (particle != null) {
             showParticle(blockLocation);
-        else if (particleBR != null)
+            Main.getInstance().cO.debug("Legacy particles casted");
+        } else if (particleBR != null) {
             particleBR.castParticles(blockLocation, player);
-        else Main.getInstance().cO.debug("No particles configured");
+            Main.getInstance().cO.debug("Particles casted");
+        } else Main.getInstance().cO.debug("No particles configured");
+
+        Main.getInstance().cO.debug("Rewards done.");
     }
 
     /**
@@ -511,11 +572,11 @@ public class BlockBR {
     /**
      * Actions fired once the block is regenerated
      *
-     * @param player Player who originally broke the block
+     * @param player        Player who originally broke the block
      * @param blockLocation Location of the broken block
-     * */
+     */
 
-    public void onRegen(Player player, Location blockLocation) {
+    public void onRegen(@Nullable Player player, Location blockLocation) {
 
         Main.getInstance().cO.debug("On-regen actions running..");
 
@@ -532,23 +593,35 @@ public class BlockBR {
         // Console commands
         if (!onRegenConsoleCommands.isEmpty())
             for (String command : onRegenConsoleCommands) {
-                command = Utils.parse(command, player, this, actualRegenTimes);
+                if (player != null)
+                    command = Utils.parse(command, player, this, actualRegenTimes);
+                else
+                    command = Utils.color(Utils.color(command));
+
                 Main.getInstance().getServer().dispatchCommand(Main.getInstance().getServer().getConsoleSender(), command);
             }
 
         // Broadcast message to all online players
         if (!onRegenBroadcastMessage.isEmpty())
             for (String line : onRegenBroadcastMessage) {
-                line = Utils.parseAndColor(line, player, this, actualRegenTimes);
+                if (player != null)
+                    line = Utils.parseAndColor(line, player, this, actualRegenTimes);
+                else
+                    line = Utils.color(Utils.parse(line, this, actualRegenTimes));
 
                 for (Player p : Main.getInstance().getServer().getOnlinePlayers())
                     p.sendMessage(line);
             }
 
-        // Inform message sent to player
-        if (!onRegenInformMessage.isEmpty())
-            for (String line : onRegenInformMessage)
-                player.sendMessage(Utils.parseAndColor(line, player, this, actualRegenTimes));
+        if (player != null)
+            // Inform message sent to player
+            if (!onRegenInformMessage.isEmpty())
+                for (String line : onRegenInformMessage)
+                    player.sendMessage(Utils.parseAndColor(line, player, this, actualRegenTimes));
+
+        Main.getInstance().cO.debug("Commands and messages fired");
+
+        Main.getInstance().cO.debug("On-regen actions done.");
     }
 
     //------------------------------------- Getters & Setters -------------------------------------
@@ -557,11 +630,15 @@ public class BlockBR {
         return replaceBlock;
     }
 
-    public int getRegenDelay() {
+    public Material getBlockType() {
+        return blockType;
+    }
+
+    public Amount getRegenDelay() {
         return regenDelay;
     }
 
-    public void setRegenDelay(int regenDelay) {
+    public void setRegenDelay(Amount regenDelay) {
         this.regenDelay = regenDelay;
     }
 
@@ -687,5 +764,13 @@ public class BlockBR {
 
     public void setApplyFortune(boolean applyFortune) {
         this.applyFortune = applyFortune;
+    }
+
+    public List<JobReward> getJobRewards() {
+        return jobRewards;
+    }
+
+    public void setJobRewards(List<JobReward> jobRewards) {
+        this.jobRewards = jobRewards;
     }
 }

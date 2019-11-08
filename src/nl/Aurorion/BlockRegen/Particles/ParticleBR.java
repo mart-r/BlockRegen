@@ -63,9 +63,9 @@ public class ParticleBR {
     public void setOffset(String offset) {
         String[] split = offset.split(";");
         try {
-            x = Double.valueOf(split[0]);
-            y = Double.valueOf(split[1]);
-            z = Double.valueOf(split[2]);
+            x = Double.parseDouble(split[0]);
+            y = Double.parseDouble(split[1]);
+            z = Double.parseDouble(split[2]);
         } catch (ArrayIndexOutOfBoundsException e) {
             x = 1;
             y = 1;
@@ -78,7 +78,7 @@ public class ParticleBR {
         try {
             // Redstone colored
             if (type.equals(Particle.REDSTONE)) {
-                Particle.DustOptions dustOptions = new Particle.DustOptions(color, 1);
+                Particle.DustOptions dustOptions = new Particle.DustOptions(color, size);
 
                 if (playerOnly)
                     player.spawnParticle(type, loc, particleCount, x, y, z, dustOptions);

@@ -76,7 +76,7 @@ public class Configuration {
         return file;
     }
 
-    public FileConfiguration getConfig() {
+    public FileConfiguration getYaml() {
         return fileConfiguration;
     }
 }

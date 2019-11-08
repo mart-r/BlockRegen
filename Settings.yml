@@ -1,43 +1,73 @@
-# BlockRegen 3.0
+# BlockRegen 3.6.0-b7
 # 
-# Developer: Aurorion
-# Version: 3.4.0
+# Developer: Wertik1206
+# Version: 3.6.0-b7
 
-# Get notified when there is a new version available
+# Get notified on startup when there is a new version available.
 Update-Checker: false
 
 # Debug spams the console with inner action tracking, enable this when asked by the dev, helps a lot. ;)
 Debug-Enabled: false
 
-# Print reload info to ./br reload executor?
+# Print reload info, warnings and errors to /br reload command executor?
 Reload-Info-To-Sender: true
 
-# Should Update Checker notify players with blockregen.admin?
+# Should Update Checker notify players with 'blockregen.admin' on join?
 Update-Notify-Admins: false
 
-# If you have WorldEdit installed and wish to make and use regions then set this to true
+# If you have WorldEdit installed and wish to make and use regions then set this to true.
+# When switched to false, worlds are used.
 Use-Regions: false
 
-# Set this to true if you dont want blocks to be regenerated in Towny towns
+# Set this to true if you dont want blocks to be regenerated in Towny towns.
 Towny-Support: false
 
-# Set this to true if you have issues with GriefPrevention
+# Set this to true if you have issues with GriefPrevention.
 GriefPrevention-Support: false
 
-# If you wish to cancel all other blocks broken besides the blocks in Blocklist.yml set this to true
+# If you wish to cancel all other blocks broken besides the blocks in Blocklist.yml set this to true.
+# Works in regions if Use-Regions: true, in worlds if Use-Regions: false
 Disable-Other-Break: false
 
-# If you wish to cancel all other blocks broken in the region then set this to true
-Disable-Other-Break-Region: false
-
-# This setting cancels the regeneration when a player uses bone meal on a crop
+# This setting cancels the regeneration when a player uses bone meal on a crop.
 Bone-Meal-Override: false
 
-# Having trouble with server crashes? This setting recovers blocks that are stuck in regening when your server crashes
+# Having trouble with server crashes? This setting recovers blocks that are stuck in regeneration when your server crashes.
 Data-Recovery: false
 
-# Add the worlds you wish to use BlockRegen in to this list
+# Should regeneration times persist over restart?
+Persist: true
+
+# Add the worlds you wish to use BlockRegen in to this list.
 Worlds-Enabled:
     - world
     - world_nether
+
+# Defaults for all-blocks region/world option
+defaults:
+    replace-block: AIR
+    regen-delay: 3
+
+# Coming soon.. yeah, it's not done yet.
+# ---- \/\/\/ ----
+
+# Exact Regen Times
+schedule:
+    # Name of the action
+    emerald-regen:
+        # Actions: regen/disable/enable
+        action: regen
+        # Block types to affect.
+        block-types: diamond, emerald
+        # Regions to affect
+        regions: one, test_one
+        # World to affect
+        worlds: world, world_nether
+        # Set only time, if you want it to repeat every day
+        time: 17:00
+        # Set day to repeat every week
+        day: FRI
+        # Set date to,.. regen once, yeah.
+        date: 06/09/2019
+
     

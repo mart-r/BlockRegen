@@ -11,9 +11,12 @@ import java.util.List;
 
 public class TabCompleterBR implements TabCompleter {
 
+    // Todo add new world and region subcommands along with block format fills
+
     // Subcommand lists
-    private final String[] subcommands = {"reload", "bypass", "check", "region", "events"};
-    private final String[] regionCommnads = {"set", "remove", "list"};
+    private final String[] subcommands = {"reload", "bypass", "check", "region", "events", "world", "debug"};
+    private final String[] regionCommands = {"set", "remove", "list", "fromWG", "listBlocks", "add", "useall", "enabled", "clear"};
+    private final String[] worldCommands = {"listBlocks", "remove", "add", "clear", "useall", "enabled"};
     private final String[] eventCommands = {"activate", "deactivate"};
 
     @Override
@@ -31,7 +34,7 @@ public class TabCompleterBR implements TabCompleter {
             }
         } else if (args.length == 2) {
             if (args[0].equals("region")) {
-                for (String regionCommand : regionCommnads) {
+                for (String regionCommand : regionCommands) {
                     if (!args[1].equals("")) {
                         if (regionCommand.toLowerCase().startsWith(args[1].toLowerCase()))
                             completeList.add(regionCommand);

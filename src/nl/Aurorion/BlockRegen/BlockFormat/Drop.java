@@ -1,6 +1,5 @@
 package nl.Aurorion.BlockRegen.BlockFormat;
 
-import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Utils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -8,36 +7,25 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class Drop {
 
-    // Todo add more ItemStack data
-
-    // ItemStack data ----------------------------------
+    // ItemStack build data ----------------------------------
     private Material material;
 
-    // Amount, random/fixed
     private Amount amount;
 
     private String displayName;
     private List<String> lore;
 
-    private List<String> enchants;
-    private List<String> flags;
-
-    // NBT UTILS NEEDED
-    // key, value
-    private HashMap<String, String> NBTData;
+    private String headOwner;
     // --------------------------------------------------
 
-    // Muh.
     private boolean dropNaturally;
 
     private boolean dropExpNaturally;
 
-    // Amounts
     private Amount expAmount;
 
     // Apply event boosters to drop?
@@ -57,7 +45,6 @@ public class Drop {
         try {
             this.material = Material.valueOf(material.toUpperCase());
         } catch (NullPointerException | IllegalArgumentException e) {
-            Main.getInstance().cO.warn(material + " in " + id + " is not a valid Material, skipping the drop item..");
             valid = false;
             return;
         }
@@ -81,6 +68,14 @@ public class Drop {
         item.setItemMeta(meta);
 
         return item;
+    }
+
+    public String getHeadOwner() {
+        return headOwner;
+    }
+
+    public void setHeadOwner(String headOwner) {
+        this.headOwner = headOwner;
     }
 
     public Material getMaterial() {

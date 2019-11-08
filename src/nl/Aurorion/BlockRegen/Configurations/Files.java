@@ -6,7 +6,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 public class Files {
 
     // Switched recovery options from Recovery.yml to Data.yml
-    public Configuration settings, messages, blocklist, regions, data;
+    private Configuration settings, messages, blocklist, regions, data;
 
     public Files(Main plugin) {
 
@@ -26,13 +26,13 @@ public class Files {
         data = new Configuration(plugin, "Data");
 
         // Recovery section created if needed
-        if (settings.getConfig().getBoolean("Data-Recovery"))
-            if (!data.getConfig().contains("Recovery"))
-                data.getConfig().createSection("Recovery");
+        if (settings.getYaml().getBoolean("Data-Recovery"))
+            if (!data.getYaml().contains("Recovery"))
+                data.getYaml().createSection("Recovery");
     }
 
     public FileConfiguration getSettings() {
-        return settings.getConfig();
+        return settings.getYaml();
     }
 
     public void reloadSettings() {
@@ -40,7 +40,7 @@ public class Files {
     }
 
     public FileConfiguration getMessages() {
-        return messages.getConfig();
+        return messages.getYaml();
     }
 
     public void reloadMessages() {
@@ -48,7 +48,7 @@ public class Files {
     }
 
     public FileConfiguration getBlocklist() {
-        return blocklist.getConfig();
+        return blocklist.getYaml();
     }
 
     public void reloadBlocklist() {
@@ -56,7 +56,11 @@ public class Files {
     }
 
     public FileConfiguration getRegions() {
-        return regions.getConfig();
+        return regions.getYaml();
+    }
+
+    public Configuration getRegionsCfg() {
+        return regions;
     }
 
     public void reloadRegions() {
@@ -66,6 +70,9 @@ public class Files {
     public void saveRegions() {
         regions.save();
     }
+
+    public void saveMessages() {
+        messages.save();}
 
     public void reload() {
         reloadBlocklist();
@@ -79,6 +86,6 @@ public class Files {
     }
 
     public FileConfiguration getData() {
-        return data.getConfig();
+        return data.getYaml();
     }
 }

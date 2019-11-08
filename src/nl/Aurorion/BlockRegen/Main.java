@@ -4,10 +4,12 @@ import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import net.milkbowl.vault.economy.Economy;
+import nl.Aurorion.BlockRegen.BlockFormat.Amount;
+import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
 import nl.Aurorion.BlockRegen.Commands.Commands;
 import nl.Aurorion.BlockRegen.Commands.TabCompleterBR;
 import nl.Aurorion.BlockRegen.Configurations.Files;
-import nl.Aurorion.BlockRegen.Events.BlockBreak;
+import nl.Aurorion.BlockRegen.Events.BlockListener;
 import nl.Aurorion.BlockRegen.Events.PlayerInteract;
 import nl.Aurorion.BlockRegen.Events.PlayerJoin;
 import nl.Aurorion.BlockRegen.Particles.ParticleUtil;
@@ -15,7 +17,6 @@ import nl.Aurorion.BlockRegen.System.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -45,7 +46,8 @@ public class Main extends JavaPlugin {
     public Economy econ;
     public WorldEditPlugin worldEdit;
     public GriefPrevention griefPrevention;
-    // Todo figure out a way to bypass WorldGuard protection
+
+    // There's no way just yet.
     public WorldGuardPlugin worldGuard;
 
     // Util classes
@@ -54,6 +56,9 @@ public class Main extends JavaPlugin {
 
     // Has all the information from Blocklist.yml loaded on startup
     private FormatHandler formatHandler;
+
+    // handles region creation etc..
+    private OptionHandler optionHandler;
 
     // Handles every output going to console, easier, more centralized control.
     public ConsoleOutput cO;
@@ -72,31 +77,48 @@ public class Main extends JavaPlugin {
 
     // Boolean options from Settings.yml
 
+    private boolean useJobs;
+
+    public boolean useJobs() {
+        return useJobs;
+    }
+
+    private boolean persist;
+
     private boolean useGP;
     private boolean updateChecker;
     private boolean useTowny;
     private boolean dataRecovery;
     private boolean reloadInfo;
+    private boolean useRegions;
+
+    public Material defaultReplaceBlock;
+    public Amount defaultRegenDelay;
 
     private void loadOptions() {
         // Recover data on sudden shutdown?
-        dataRecovery = files.getSettings().getBoolean("Data-Recovery");
+        dataRecovery = files.getSettings().getBoolean("Data-Recovery", false);
 
-        reloadInfo = files.getSettings().getBoolean("Reload-Info-To-Sender");
+        reloadInfo = files.getSettings().getBoolean("Reload-Info-To-Sender", false);
 
         // Check for updates?
-        if (files.getSettings().get("Update-Checker") != null)
-            updateChecker = files.getSettings().getBoolean("Update-Checker");
-        else updateChecker = false;
+        updateChecker = files.getSettings().getBoolean("Update-Checker", false);
 
         // Grief Prevention support
-        useGP = files.getSettings().getBoolean("GriefPrevention-Support");
+        useGP = files.getSettings().getBoolean("GriefPrevention-Support", false);
 
         // Towny support
-        useTowny = files.getSettings().getBoolean("Towny-Support");
+        useTowny = files.getSettings().getBoolean("Towny-Support", false);
+
+        persist = files.getSettings().getBoolean("Persist", false);
+
+        useRegions = files.getSettings().getBoolean("Use-Regions", false);
+
+        defaultRegenDelay = loadAmount("defaults.regen-delay", 1);
+        defaultReplaceBlock = Material.valueOf(files.getSettings().getString("defaults.replace-block", "AIR").toUpperCase());
     }
 
-    public boolean isPlaceholderAPI() {
+    public boolean usePlaceholderAPI() {
         return placeholderAPI;
     }
 
@@ -118,17 +140,27 @@ public class Main extends JavaPlugin {
 
         // Setup ConsoleOutput for the first time
         cO = new ConsoleOutput(this);
-        cO.setDebug(files.settings.getConfig().getBoolean("Debug-Enabled", false));
-        cO.setPrefix(Utils.color(files.messages.getConfig().getString("Messages.Prefix")));
+        cO.setDebug(files.getSettings().getBoolean("Debug-Enabled", false));
+        cO.setPrefix(Utils.color(files.getMessages().getString("Messages.Prefix")));
 
         // Setup enchantUtil
         enchantUtil = new EnchantUtil();
 
-        // Loads BlockBR formats on instantiation
-        formatHandler = new FormatHandler(this);
+        // Jobs support
+        useJobs = getJobs();
+        cO.debug("Jobs.. " + useJobs + ", " + getJobs());
 
-        // Commands and events
-        registerEvents();
+        // Loads BlockBR formats
+        formatHandler = new FormatHandler(this);
+        formatHandler.loadBlocks();
+
+        // Load regions
+        optionHandler = new OptionHandler();
+
+        if (useRegions)
+            optionHandler.loadRegions();
+        else
+            optionHandler.loadWorlds();
 
         // Load messages to cache
         Messages.load();
@@ -144,9 +176,52 @@ public class Main extends JavaPlugin {
             placeholderAPI = true;
         }
 
+        // What?
         Utils.fillFireworkColors();
 
+        // Check for block recovers
         recoveryCheck();
+
+        // Load regen times
+        FileConfiguration data = getFiles().getData();
+
+        if (data.contains("Regen-Times"))
+            for (String dataString : data.getStringList("Regen-Times")) {
+                Location loc = Utils.stringToLocation(dataString.split(":")[0]);
+                int value = Integer.parseInt(dataString.split(":")[1]);
+                Utils.regenTimesBlocks.put(loc, value);
+            }
+        else data.createSection("Regen-Times");
+
+        // Persist
+        if (persist)
+            // Load stuff
+            for (String dataString : files.getData().getStringList("Persist")) {
+                String[] arr = dataString.split(":");
+
+                // locationString:MATERIAL_ORIGIN:TIME_UNTIL
+
+                Location loc = Utils.stringToLocation(arr[0]);
+
+                if (loc == null) {
+                    cO.err("Invalid location in persist, regen process has not been added.");
+                    continue;
+                }
+
+                // Ignore if there's no way to fetch BlockBR data, means it stays the original
+                if (!formatHandler.getTypes().contains(arr[1]))
+                    continue;
+
+                Material material = Material.valueOf(arr[1].toUpperCase());
+
+                BlockBR blockBR = formatHandler.getBlockBR(material.name());
+
+                loc.getBlock().setType(blockBR.getReplaceBlock());
+
+                long time = Long.parseLong(arr[2]);
+
+                new RegenProcess(loc, material, time);
+            }
 
         // Metrics stats
         enableMetrics();
@@ -168,16 +243,8 @@ public class Main extends JavaPlugin {
                 cO.info("You're running a development build, update checks ignored.");
         }
 
-        // Load regen times
-        FileConfiguration data = getFiles().getData();
-
-        if (data.contains("Regen-Times"))
-            for (String dataString : data.getStringList("Regen-Times")) {
-                Location loc = Utils.stringToLocation(dataString.split(":")[0]);
-                int value = Integer.parseInt(dataString.split(":")[1]);
-                Utils.regenTimesBlocks.put(loc, value);
-            }
-        else data.createSection("Regen-Times");
+        // Events and commands
+        registerEvents();
 
         registerCommands();
 
@@ -191,8 +258,15 @@ public class Main extends JavaPlugin {
     }
 
     public void reload(CommandSender sender) {
+        long start = System.currentTimeMillis();
+
         if (reloadInfo)
             cO.setReloadSender(sender);
+
+        if (useRegions)
+            optionHandler.saveRegions();
+        else
+            optionHandler.saveWorlds();
 
         // Reload all files
         files.reload();
@@ -200,55 +274,58 @@ public class Main extends JavaPlugin {
         // Load boolean options from Settings.yml
         loadOptions();
 
-        if (reloadInfo)
-            sender.sendMessage("§7Reloaded files..");
-
         // Update ConsoleOutput
-        cO.setDebug(files.settings.getConfig().getBoolean("Debug-Enabled", false));
-        cO.setPrefix(Utils.color(files.messages.getConfig().getString("Messages.Prefix")));
+        cO.setDebug(files.getSettings().getBoolean("Debug-Enabled", false));
+        cO.setPrefix(Utils.color(files.getMessages().getString("Messages.Prefix")));
+
+        cO.info("Reloaded files..");
 
         if (cO.isDebug())
-            if (reloadInfo)
-                sender.sendMessage("§eDebug enabled..");
+            cO.info("§eDebug enabled..");
 
         // Clear bars
-        Utils.bars.clear();
+        Utils.clearEvents();
 
         // In case soft-dependencies are installed now
         setupWorldEdit();
         setupWorldGuard();
         setupEconomy();
+        useJobs = getJobs();
 
         // PAPI integration on reload, can be useful
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             if (!placeholderAPI) {
                 if (reloadInfo)
-                    sender.sendMessage("§7Found PAPI! Hooking!");
+                    cO.info("§7Found PAPI! Hooking!");
                 placeholderAPI = true;
             }
         } else if (placeholderAPI) {
-            if (reloadInfo)
-                sender.sendMessage("§7PAPI not found, disabling support.");
+            cO.info("§7PAPI not found, disabling support.");
             placeholderAPI = false;
         }
 
-        if (reloadInfo)
-            sender.sendMessage("§7Searched for dependencies..");
+        cO.info("§7Searched for dependencies..");
 
         // Setup enchantUtil
         enchantUtil = new EnchantUtil();
 
         // Load all messages from Messages.yml to cache
         Messages.load();
-        if (reloadInfo)
-            sender.sendMessage("§7Loaded messages..");
+        cO.info("Loaded messages..");
 
         // Load block formats from Blocklist.yml
         formatHandler.reload();
-        if (reloadInfo)
-            sender.sendMessage("§7Loaded " + formatHandler.getBlocks().size() + " format(s) and " + Utils.events.size() + " event(s)..");
+
+        cO.info("Loaded " + formatHandler.getBlocks().size() + " format(s) and " + Utils.events.size() + " event(s)..");
+
+        optionHandler.loadWorlds();
+        optionHandler.loadRegions();
 
         cO.setReloadSender(null);
+
+        long stop = System.currentTimeMillis();
+
+        sender.sendMessage(Messages.get("Reload").replace("%time%", String.valueOf(stop - start)));
     }
 
     @Override
@@ -257,20 +334,37 @@ public class Main extends JavaPlugin {
         getServer().getScheduler().cancelTasks(this);
 
         // If there's no recovery, replace all the blocks with before-regen state
-        if (!dataRecovery && !Utils.regenProcesses.isEmpty())
-            for (RegenProcess regenProcess : Utils.regenProcesses)
+        if (!Utils.regenProcesses.isEmpty() && persist) {
+            cO.info("Saving persist..");
+
+            FileConfiguration data = files.getData();
+            List<String> persist = new ArrayList<>();
+
+            for (RegenProcess regenProcess : Utils.regenProcesses) {
+                // Replace, in case we never come back.
                 regenProcess.getLoc().getBlock().setType(regenProcess.getMaterial());
 
+                // Save time until regen
+                long time = regenProcess.getRegenTime() - System.currentTimeMillis();
+                cO.debug("Regen Time: " + regenProcess.getRegenTime() + " Persist time: " + time);
+                cO.debug("Until Regen: " + regenProcess.getUntilRegenFormatted());
+
+                // Save to Data.yml
+                // - locationString:MATERIAL_ORIGINAL:TIME_UNTIL
+                persist.add(Utils.locationToString(regenProcess.getLoc()) + ":" + regenProcess.getMaterial().name() + ":" + time);
+            }
+
+            data.set("Persist", persist);
+        }
+
         // Clear all boss bars
-        for (BossBar bossBar : Utils.bars.values())
-            bossBar.removeAll();
+        Utils.clearEvents();
 
         // Save regenTimes
         FileConfiguration data = getFiles().getData();
         List<String> regenTimes = new ArrayList<>();
 
-        for (Location loc : Utils.regenTimesBlocks.keySet())
-            regenTimes.add(Utils.locationToString(loc) + ":" + Utils.regenTimesBlocks.get(loc));
+        Utils.regenTimesBlocks.keySet().forEach(loc -> regenTimes.add(Utils.locationToString(loc) + ":" + Utils.regenTimesBlocks.get(loc)));
 
         data.set("Regen-Times", regenTimes);
 
@@ -278,7 +372,7 @@ public class Main extends JavaPlugin {
         getFiles().saveData();
     }
 
-    // Register commands and tab completers
+    // Register commands and tab completer
     private void registerCommands() {
         getCommand("blockregen").setExecutor(new Commands(this));
         getCommand("blockregen").setTabCompleter(new TabCompleterBR());
@@ -288,7 +382,7 @@ public class Main extends JavaPlugin {
         PluginManager pm = this.getServer().getPluginManager();
 
         pm.registerEvents(new Commands(this), this);
-        pm.registerEvents(new BlockBreak(this), this);
+        pm.registerEvents(new BlockListener(), this);
         pm.registerEvents(new PlayerInteract(this), this);
         pm.registerEvents(new PlayerJoin(this), this);
     }
@@ -407,6 +501,37 @@ public class Main extends JavaPlugin {
         }
     }
 
+    private Amount loadAmount(String path, int defaultValue) {
+        ConfigurationSection section = files.getSettings().getConfigurationSection(path);
+
+        Amount amount = new Amount(defaultValue);
+
+        // Fixed or not?
+        try {
+            if (section.contains("high") && section.contains("low")) {
+                // Random amount
+                try {
+                    amount = new Amount(section.getInt("low"), section.getInt("high"));
+                } catch (NullPointerException e) {
+                    cO.warn("Amount on path " + path + " is not valid, returning default.");
+                    return new Amount(defaultValue);
+                }
+
+                cO.debug(amount.toString());
+            }
+        } catch (NullPointerException e) {
+            // Fixed
+            try {
+                amount = new Amount(files.getSettings().getInt(path));
+            } catch (NullPointerException e1) {
+                cO.warn("Amount on path " + path + " is not valid, returning default.");
+                return new Amount(defaultValue);
+            }
+        }
+
+        return amount;
+    }
+
     //-------------------- Getters --------------------------
     public Economy getEconomy() {
         return this.econ;
@@ -416,7 +541,7 @@ public class Main extends JavaPlugin {
         return this.worldEdit;
     }
 
-    public boolean getJobs() {
+    private boolean getJobs() {
         return getServer().getPluginManager().getPlugin("Jobs") != null;
     }
 
@@ -454,5 +579,9 @@ public class Main extends JavaPlugin {
 
     public boolean isDataRecovery() {
         return dataRecovery;
+    }
+
+    public OptionHandler getOptionHandler() {
+        return optionHandler;
     }
 }
