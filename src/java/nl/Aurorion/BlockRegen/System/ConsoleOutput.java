@@ -1,6 +1,5 @@
 package nl.Aurorion.BlockRegen.System;
 
-import nl.Aurorion.BlockRegen.Main;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -52,11 +51,14 @@ public class ConsoleOutput {
 
             if (reloadSender != null)
                 reloadSender.sendMessage(color("&eDEBUG: " + msg));
-
-            for (CommandSender s : debuggers)
-                if (s != null)
-                    s.sendMessage(color("&eDEBUG: " + msg));
         }
+    }
+
+    public void debug(String msg, CommandSender origin) {
+        debug(msg);
+
+        if (debuggers.contains(origin))
+            origin.sendMessage(color("&eDEBUG: " + msg));
     }
 
     public void err(String msg) {

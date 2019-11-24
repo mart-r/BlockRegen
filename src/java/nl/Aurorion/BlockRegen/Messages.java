@@ -36,7 +36,7 @@ public class Messages {
         addNew("Invalid-Region-Id", "&cThere's no region by that ID.");
         addNew("Invalid-Region-Id-Tip", "&7(You have to be in the same world as the region)");
 
-        Main.getInstance().getFiles().saveMessages();
+        Main.getInstance().getFiles().messages.save();
     }
 
     private static void addNew(String key, String value) {

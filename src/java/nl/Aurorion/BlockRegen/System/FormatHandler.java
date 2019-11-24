@@ -16,7 +16,7 @@ public class FormatHandler {
     private Main main;
 
     // MATERIAL, BLOCK FORMAT
-    private HashMap<String, BlockBR> blocks;
+    private HashMap<String, BlockFormat> blocks;
 
     // Blocklist.yml
     private FileConfiguration blocklist;
@@ -33,8 +33,8 @@ public class FormatHandler {
         loadBlocks();
     }
 
-    public BlockBR getBlockBRByEvent(String eventName) {
-        for (BlockBR blockBR : blocks.values()) {
+    public BlockFormat getBlockBRByEvent(String eventName) {
+        for (BlockFormat blockBR : blocks.values()) {
             if (blockBR.getEvent() != null)
                 if (Utils.removeColors(blockBR.getEvent().getName()).equals(eventName))
                     return blockBR;
@@ -47,7 +47,7 @@ public class FormatHandler {
      *
      * @return BlockBR
      */
-    public BlockBR getBlockBR(String blockName) {
+    public BlockFormat getBlockBR(String blockName) {
         return blocks.get(blockName.toUpperCase());
     }
 
@@ -62,7 +62,7 @@ public class FormatHandler {
 
         if (blocklist.contains("Blocks"))
             for (String name : blocklist.getConfigurationSection("Blocks").getKeys(false)) {
-                BlockBR block = loadBlock(name);
+                BlockFormat block = loadBlock(name);
                 if (block != null) {
                     blocks.put(name, block);
                     main.cO.debug("Loaded " + name);
@@ -79,10 +79,10 @@ public class FormatHandler {
      * @return BlockBR or null
      */
 
-    private BlockBR loadBlock(String name) {
+    private BlockFormat loadBlock(String name) {
         ConfigurationSection section = blocklist.getConfigurationSection("Blocks." + name);
 
-        BlockBR block = new BlockBR(name, section.getString("replace-block"));
+        BlockFormat block = new BlockFormat(name, section.getString("replace-block"));
 
         if (!block.isValid())
             return null;
@@ -474,7 +474,7 @@ public class FormatHandler {
         return list;
     }
 
-    public HashMap<String, BlockBR> getBlocks() {
+    public HashMap<String, BlockFormat> getBlocks() {
         return blocks;
     }
 

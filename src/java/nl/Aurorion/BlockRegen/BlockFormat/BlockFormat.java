@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-public class BlockBR {
+public class BlockFormat {
     // Misc
 
     // Materials, checked on load, cannot be null when already loaded to cache
@@ -102,7 +102,7 @@ public class BlockBR {
      * @param replaceBlock type of block which to repalce with in string
      */
 
-    public BlockBR(String blockType, String replaceBlock) {
+    public BlockFormat(String blockType, String replaceBlock) {
         try {
             this.blockType = Material.valueOf(blockType.toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -143,8 +143,6 @@ public class BlockBR {
     public void setEnchantsRequired(List<String> enchantsRequired) {
         List<String> finalEnchants = new ArrayList<>();
         for (String enchant : enchantsRequired) {
-            Main.getInstance().cO.debug("Input: " + enchant);
-
             try {
                 if (enchant.contains(";"))
                     if (enchant.split(";")[1] == null)
@@ -228,11 +226,11 @@ public class BlockBR {
         if (!permission.equals(""))
             if (!player.hasPermission(permission)) {
                 player.sendMessage(Messages.get("Permission-Error").replace("%permission%", permission));
-                Main.getInstance().cO.debug("Failed on permission check");
+                Main.getInstance().cO.debug("Failed on permission check", player);
                 return false;
             }
 
-        Main.getInstance().cO.debug("Passed permission check");
+        Main.getInstance().cO.debug("Passed permission check", player);
 
         //------------------------------------- Tool check -------------------------------------
 
@@ -243,13 +241,12 @@ public class BlockBR {
                 if (!toolsRequired.contains(tool.getType().toString().toUpperCase())) {
                     player.sendMessage(Messages.get("Tool-Required-Error").replace("%tool%", Utils.listToString(toolsRequired, "§f, §7", "§cNo tools set")));
 
-                    Main.getInstance().cO.debug("Tool check failed");
+                    Main.getInstance().cO.debug("Tool check failed", player);
                     return false;
                 }
-            } else
-                Main.getInstance().cO.debug("Skipping tool check");
+            }
 
-        Main.getInstance().cO.debug("Tool check passed");
+        Main.getInstance().cO.debug("Tool check passed", player);
 
         //------------------------------------- Enchant check -------------------------------------
 
@@ -277,13 +274,12 @@ public class BlockBR {
             if (!ep) {
                 player.sendMessage(Messages.get("Enchant-Required-Error").replace("%enchant%", Utils.listToString(enchantsRequired, "§f, §7", "§cNo enchants set")));
 
-                Main.getInstance().cO.debug("Enchant check failed");
+                Main.getInstance().cO.debug("Enchant check failed", player);
                 return false;
             }
-        } else
-            Main.getInstance().cO.debug("Skipping enchant check");
+        }
 
-        Main.getInstance().cO.debug("Enchant check passed");
+        Main.getInstance().cO.debug("Enchant check passed", player);
 
         //------------------------------------- Jobs -------------------------------------
 
@@ -301,7 +297,7 @@ public class BlockBR {
                 for (JobRequirement jobReq : jobRequirements) {
                     if (jobNames.contains(jobReq.getJob().toLowerCase())) {
                         if (jobs.get(i).getLevel() < jobReq.getLevel()) {
-                            Main.getInstance().cO.debug("Missing the level, " + jobs.get(i).getLevel() + " < " + jobReq.getLevel());
+                            Main.getInstance().cO.debug("Missing the level, " + jobs.get(i).getLevel() + " < " + jobReq.getLevel(), player);
                             jp = false;
                         }
                     } else
@@ -317,15 +313,15 @@ public class BlockBR {
                 if (!jp) {
                     player.sendMessage(Messages.get("Jobs-Error").replace("%jobs%", Utils.mapToString(jobReqs, "§f, §7", " ", "§4NaN")));
 
-                    Main.getInstance().cO.debug("Jobs check failed");
+                    Main.getInstance().cO.debug("Jobs check failed", player);
                     return false;
                 }
             }
         }
 
-        Main.getInstance().cO.debug("Jobs check passed");
+        Main.getInstance().cO.debug("Jobs check passed", player);
 
-        Main.getInstance().cO.debug("Everything 'norminal', go on with regeneration.");
+        Main.getInstance().cO.debug("Everything 'norminal', go on with regeneration.", player);
         return true;
     }
 
@@ -383,7 +379,7 @@ public class BlockBR {
                 player.sendMessage(line);
             }
 
-        Main.getInstance().cO.debug("Command and messages fired");
+        Main.getInstance().cO.debug("Command and messages fired", player);
 
         //------------------------------------- Item & EXP Drops -------------------------------------
 
@@ -420,7 +416,7 @@ public class BlockBR {
                     if (drop.getMaterial().equals(Material.PLAYER_HEAD)) {
                         ItemMeta savedMeta = item.getItemMeta();
 
-                        Main.getInstance().cO.debug("Creating a player head..");
+                        Main.getInstance().cO.debug("Creating a player head..", player);
 
                         if (drop.getHeadOwner() != null) {
                             if (drop.getHeadOwner().equalsIgnoreCase("%player%")) {
@@ -502,7 +498,7 @@ public class BlockBR {
                 }
         }
 
-        Main.getInstance().cO.debug("Drops given");
+        Main.getInstance().cO.debug("Drops given", player);
 
         //------------------------------------- Special Event Item -------------------------------------
 
@@ -520,7 +516,7 @@ public class BlockBR {
                         player.getInventory().addItem(eventItem);
             }
 
-        Main.getInstance().cO.debug("Events rewarded if present");
+        Main.getInstance().cO.debug("Events rewarded if present", player);
 
         //------------------------------------- Vault money -------------------------------------
 
@@ -533,7 +529,7 @@ public class BlockBR {
 
                 // Can fail, not so common
                 if (response.transactionSuccess())
-                    Main.getInstance().cO.debug("Gave " + moneyToGive + " to " + player.getName());
+                    Main.getInstance().cO.debug("Gave " + moneyToGive + " to " + player.getName(), player);
                 else Main.getInstance().cO.err("Could not deposit money to player's account.");
             }
         }
@@ -550,13 +546,13 @@ public class BlockBR {
         // We still support both options, three base types from older versions & new particleBR system
         if (particle != null) {
             showParticle(blockLocation);
-            Main.getInstance().cO.debug("Legacy particles casted");
+            Main.getInstance().cO.debug("Legacy particles casted", player);
         } else if (particleBR != null) {
             particleBR.castParticles(blockLocation, player);
-            Main.getInstance().cO.debug("Particles casted");
-        } else Main.getInstance().cO.debug("No particles configured");
+            Main.getInstance().cO.debug("Particles casted", player);
+        } else Main.getInstance().cO.debug("No particles configured", player);
 
-        Main.getInstance().cO.debug("Rewards done.");
+        Main.getInstance().cO.debug("Rewards done.", player);
     }
 
     /**
@@ -578,7 +574,7 @@ public class BlockBR {
 
     public void onRegen(@Nullable Player player, Location blockLocation) {
 
-        Main.getInstance().cO.debug("On-regen actions running..");
+        Main.getInstance().cO.debug("On-regen actions running..", player);
 
         // Regen times placeholders
         String actualRegenTimes = "Unlimited";
@@ -619,9 +615,9 @@ public class BlockBR {
                 for (String line : onRegenInformMessage)
                     player.sendMessage(Utils.parseAndColor(line, player, this, actualRegenTimes));
 
-        Main.getInstance().cO.debug("Commands and messages fired");
+        Main.getInstance().cO.debug("Commands and messages fired", player);
 
-        Main.getInstance().cO.debug("On-regen actions done.");
+        Main.getInstance().cO.debug("On-regen actions done.", player);
     }
 
     //------------------------------------- Getters & Setters -------------------------------------

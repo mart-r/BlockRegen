@@ -1,9 +1,10 @@
-# BlockRegen 3.6.0-b7
+# BlockRegen 3.6.0-b8
 # 
-# Developer: Wertik1206
-# Version: 3.6.0-b7
+# Developer: Wertik1206 & Aurorion
+# Version: 3.6.0-b8
 
 # Get notified on startup when there is a new version available.
+# Disabled by default, you are using a dev version.
 Update-Checker: false
 
 # Debug spams the console with inner action tracking, enable this when asked by the dev, helps a lot. ;)
@@ -35,7 +36,7 @@ Bone-Meal-Override: false
 # Having trouble with server crashes? This setting recovers blocks that are stuck in regeneration when your server crashes.
 Data-Recovery: false
 
-# Should regeneration times persist over restart?
+# Should regeneration time persist over restart?
 Persist: true
 
 # Add the worlds you wish to use BlockRegen in to this list.
@@ -47,27 +48,3 @@ Worlds-Enabled:
 defaults:
     replace-block: AIR
     regen-delay: 3
-
-# Coming soon.. yeah, it's not done yet.
-# ---- \/\/\/ ----
-
-# Exact Regen Times
-schedule:
-    # Name of the action
-    emerald-regen:
-        # Actions: regen/disable/enable
-        action: regen
-        # Block types to affect.
-        block-types: diamond, emerald
-        # Regions to affect
-        regions: one, test_one
-        # World to affect
-        worlds: world, world_nether
-        # Set only time, if you want it to repeat every day
-        time: 17:00
-        # Set day to repeat every week
-        day: FRI
-        # Set date to,.. regen once, yeah.
-        date: 06/09/2019
-
-    

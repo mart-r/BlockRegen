@@ -1,0 +1,17 @@
+name: BlockRegen
+main: nl.Aurorion.BlockRegen.Main
+version: 3.6.0-b8
+authors: [Aurorion, Wertik1206]
+softdepend: [Vault, WorldGuard, WorldEdit, Towny, GriefPrevention, Multiverse-Core, Jobs]
+api-version: 1.13
+commands:
+  blockregen:
+    aliases: [br, blockr, bregen, breg]
+    description: Main plugin command
+permissions:
+  blockregen.region.*:
+    default: true
+    description: The ability to break BR blocks in regions
+  blockregen.world.*:
+    default: true
+    description: The ability to break BR blocks in worlds

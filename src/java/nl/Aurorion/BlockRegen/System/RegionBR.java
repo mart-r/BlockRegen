@@ -2,6 +2,13 @@ package nl.Aurorion.BlockRegen.System;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedPolygonalRegion;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
+import com.sk89q.worldguard.protection.regions.RegionType;
+import nl.Aurorion.BlockRegen.Main;
 import org.bukkit.Location;
 
 import java.util.ArrayList;
@@ -15,9 +22,23 @@ public class RegionBR {
     // Region selection
     private CuboidRegion region;
 
+    // Polygon region setting
+    private boolean polygon = false;
+
+    // Name of the WG region holding it
+    private String polygonName;
+
+    public String getPolygonName() {
+        return polygonName;
+    }
+
+    public boolean isPolygon() {
+        return polygon;
+    }
+
     // Base region locations
-    private Location locA;
-    private Location locB;
+    private Location locA = null;
+    private Location locB = null;
 
     // Used block types
     private List<String> blockTypes = new ArrayList<>();
@@ -51,9 +72,42 @@ public class RegionBR {
         this.valid = true;
     }
 
+
+    // Create region from polygon
+    public RegionBR(String name, String polygonName) {
+        this.name = name;
+
+        this.polygon = true;
+
+        this.polygonName = polygonName;
+
+        this.valid = true;
+    }
+
     // Contains location?
     public boolean contains(Location loc) {
-        return region.contains(BukkitAdapter.asBlockVector(loc));
+
+        if (polygon) {
+            RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+
+            RegionManager regionManager = container.get(BukkitAdapter.adapt(loc.getWorld()));
+
+            if (regionManager.hasRegion(polygonName)) {
+                Main.getInstance().cO.debug("Region no longer exists.. removing.");
+                return false;
+            }
+
+            ProtectedRegion r = regionManager.getRegion(polygonName);
+
+            if (!r.getType().equals(RegionType.POLYGON)) {
+                Main.getInstance().cO.debug("Region is no longer polygon.. setting to cuboid.");
+                this.polygon = false;
+                this.polygonName = null;
+                return contains(loc);
+            }
+
+            return r.contains(BukkitAdapter.asBlockVector(loc));
+        } else return region.contains(BukkitAdapter.asBlockVector(loc));
     }
 
     public void addType(String name) {

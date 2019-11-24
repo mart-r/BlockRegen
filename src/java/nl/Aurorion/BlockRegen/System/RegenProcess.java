@@ -1,6 +1,6 @@
 package nl.Aurorion.BlockRegen.System;
 
-import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
+import nl.Aurorion.BlockRegen.BlockFormat.BlockFormat;
 import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Utils;
 import org.bukkit.Location;
@@ -36,7 +36,7 @@ public class RegenProcess {
     private Block block;
 
     // BlockBR format to act by
-    private BlockBR blockBR;
+    private BlockFormat blockFormat;
 
     // System time, when the block regenerates, probably.
     private long regenTime;
@@ -56,11 +56,11 @@ public class RegenProcess {
     }
 
     public void fetchBR() {
-        this.blockBR = plugin.getFormatHandler().getBlockBR(material.name());
-        plugin.cO.debug("Fetch by " + material.name() + " BlockBR == " + blockBR.getBlockType().name());
+        this.blockFormat = plugin.getFormatHandler().getBlockBR(material.name());
+        plugin.cO.debug("Fetch by " + material.name() + " BlockBR == " + blockFormat.getBlockType().name());
 
         // Fetch random/fixed regen delay
-        this.regenDelay = blockBR.getRegenDelay().getAmount();
+        this.regenDelay = blockFormat.getRegenDelay().getAmount();
 
         this.regenTime = System.currentTimeMillis() + regenDelay * 1000;
         plugin.cO.debug("Regen Time: " + regenTime);
@@ -87,7 +87,7 @@ public class RegenProcess {
         this.material = material;
         this.regenTime = System.currentTimeMillis() + untilRegen;
 
-        this.blockBR = plugin.getFormatHandler().getBlockBR(material.name());
+        this.blockFormat = plugin.getFormatHandler().getBlockBR(material.name());
 
         this.block = loc.getBlock();
         this.state = block.getState();
@@ -115,12 +115,12 @@ public class RegenProcess {
         String blockType = block.getType().name();
 
         // DOUBLE PLANTS
-        if ((blockBR.getBlockType().equals(Material.SUNFLOWER) || blockBR.getBlockType().equals(Material.ROSE_BUSH)) && !block.getRelative(BlockFace.DOWN).getType().equals(Material.AIR)) {
+        if ((blockFormat.getBlockType().equals(Material.SUNFLOWER) || blockFormat.getBlockType().equals(Material.ROSE_BUSH)) && !block.getRelative(BlockFace.DOWN).getType().equals(Material.AIR)) {
             plugin.cO.debug("Double plant detected and can be placed");
-            Utils.setFlower(block, blockBR.getBlockType());
+            Utils.setFlower(block, blockFormat.getBlockType());
         } else
             // Update the state
-            block.setType(blockBR.getBlockType());
+            block.setType(blockFormat.getBlockType());
 
         // Clear this regen process
         Utils.clearProcess(loc);
@@ -141,7 +141,7 @@ public class RegenProcess {
                     recoverySection.set(blockType, locations);
 
                     // Save Data.yml
-                    plugin.getFiles().saveData();
+                    plugin.getFiles().data.save();
                 } else
                     recoverySection.set(blockType, null);
 
@@ -150,7 +150,7 @@ public class RegenProcess {
         }
 
         // Run onRegen actions
-        blockBR.onRegen(player, block.getLocation());
+        blockFormat.onRegen(player, block.getLocation());
     }
 
     public String getUntilRegenFormatted() {
@@ -174,8 +174,8 @@ public class RegenProcess {
         return material;
     }
 
-    public BlockBR getBlockBR() {
-        return blockBR;
+    public BlockFormat getBlockFormat() {
+        return blockFormat;
     }
 
     public Main getPlugin() {
@@ -210,8 +210,8 @@ public class RegenProcess {
         this.block = block;
     }
 
-    public void setBlockBR(BlockBR blockBR) {
-        this.blockBR = blockBR;
+    public void setBlockFormat(BlockFormat blockFormat) {
+        this.blockFormat = blockFormat;
     }
 
     public void setRegenTime(long regenTime) {

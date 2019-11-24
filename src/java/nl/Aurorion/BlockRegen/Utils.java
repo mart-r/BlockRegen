@@ -1,7 +1,7 @@
 package nl.Aurorion.BlockRegen;
 
 import me.clip.placeholderapi.PlaceholderAPI;
-import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
+import nl.Aurorion.BlockRegen.BlockFormat.BlockFormat;
 import nl.Aurorion.BlockRegen.System.RegenProcess;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -15,7 +15,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -58,10 +57,10 @@ public class Utils {
 
         if (regenProcess != null) {
             // Cancel particle task
-            if (regenProcess.getBlockBR().getParticleBR() != null)
-                if (!regenProcess.getBlockBR().getParticleBR().getTasks().isEmpty())
-                    if (regenProcess.getBlockBR().getParticleBR().getTasks().containsKey(loc))
-                        regenProcess.getBlockBR().getParticleBR().getTasks().get(loc).cancel();
+            if (regenProcess.getBlockFormat().getParticleBR() != null)
+                if (!regenProcess.getBlockFormat().getParticleBR().getTasks().isEmpty())
+                    if (regenProcess.getBlockFormat().getParticleBR().getTasks().containsKey(loc))
+                        regenProcess.getBlockFormat().getParticleBR().getTasks().get(loc).cancel();
 
             // Clear process
             regenProcesses.remove(regenProcess);
@@ -148,19 +147,19 @@ public class Utils {
         return ChatColor.stripColor(color(str));
     }
 
-    public static String parse(String str, Player p, BlockBR blockBR, String actualRegenTimes) {
+    public static String parse(String str, Player p, BlockFormat blockFormat, String actualRegenTimes) {
 
-        str = str.replace("%regenDelay%", String.valueOf(blockBR.getRegenDelay()));
-        str = str.replace("%regenTimesMax%", String.valueOf(blockBR.getRegenTimes()));
+        str = str.replace("%regenDelay%", String.valueOf(blockFormat.getRegenDelay()));
+        str = str.replace("%regenTimesMax%", String.valueOf(blockFormat.getRegenTimes()));
         str = str.replace("%regenTimesActual%", String.valueOf(actualRegenTimes));
 
         return parse(str, p);
     }
 
-    public static String parse(String str, BlockBR blockBR, String actualRegenTimes) {
+    public static String parse(String str, BlockFormat blockFormat, String actualRegenTimes) {
 
-        str = str.replace("%regenDelay%", String.valueOf(blockBR.getRegenDelay()));
-        str = str.replace("%regenTimesMax%", String.valueOf(blockBR.getRegenTimes()));
+        str = str.replace("%regenDelay%", String.valueOf(blockFormat.getRegenDelay()));
+        str = str.replace("%regenTimesMax%", String.valueOf(blockFormat.getRegenTimes()));
         str = str.replace("%regenTimesActual%", String.valueOf(actualRegenTimes));
 
         return str;
@@ -247,8 +246,8 @@ public class Utils {
         }
     }
 
-    public static String parseAndColor(String str, Player p, BlockBR blockBR, String actualRegenTimes) {
-        return color(parse(str, p, blockBR, actualRegenTimes));
+    public static String parseAndColor(String str, Player p, BlockFormat blockFormat, String actualRegenTimes) {
+        return color(parse(str, p, blockFormat, actualRegenTimes));
     }
 
     // Both methods were taken directly from Spigot (Bukkit) source code & modified

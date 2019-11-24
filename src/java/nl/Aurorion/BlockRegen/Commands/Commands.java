@@ -9,7 +9,8 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
-import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
+import com.sk89q.worldguard.protection.regions.RegionType;
+import nl.Aurorion.BlockRegen.BlockFormat.BlockFormat;
 import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Messages;
 import nl.Aurorion.BlockRegen.System.RegionBR;
@@ -55,7 +56,7 @@ public class Commands implements CommandExecutor, Listener {
                 + "\n§3/" + label + " regions §8- §7All the info about regions."
                 + "\n§3/" + label + " events §8- §7Check all your events."
                 + "\n§3/" + label + " worlds §8- §7All the info about worlds."
-                + "\n§3/" + label + " debug §8- §7Enabled player debug mode. \n§c[§4!§c] §7Experimental feature\n"
+                + "\n§3/" + label + " debug §8- §7Enabled player debug mode. \n§c[§4!§c] §7A slightly less experimental feature\n"
                 + "\n§8§m                                                 §r");
     }
 
@@ -250,6 +251,7 @@ public class Commands implements CommandExecutor, Listener {
                         break;
                     // --------------------------------------------------------------- From WG
                     case "fromwg":
+                        // WorldGuard not enabled
                         if (plugin.worldGuard == null) {
                             player.sendMessage(Messages.get("WorldGuard-Required"));
                             return true;
@@ -276,7 +278,16 @@ public class Commands implements CommandExecutor, Listener {
 
                         ProtectedRegion region = regionManager.getRegion(args[3]);
 
-                        plugin.getOptionHandler().createRegion(args[2], BukkitAdapter.adapt(player.getWorld(), region.getMinimumPoint()), BukkitAdapter.adapt(player.getWorld(), region.getMaximumPoint()));
+                        // Polygonal region
+                        if (region.getType().equals(RegionType.POLYGON)) {
+
+                            player.sendMessage("§7");
+
+                        } else {
+
+                            // Create regionBR option instance
+                            plugin.getOptionHandler().createRegion(args[2], BukkitAdapter.adapt(player.getWorld(), region.getMinimumPoint()), BukkitAdapter.adapt(player.getWorld(), region.getMaximumPoint()));
+                        }
 
                         player.sendMessage(Messages.get("Imported-Region"));
                         break;
@@ -665,23 +676,23 @@ public class Commands implements CommandExecutor, Listener {
 
                                 // Bossbar
 
-                                BlockBR blockBR = plugin.getFormatHandler().getBlockBRByEvent(allArgs);
+                                BlockFormat blockFormat = plugin.getFormatHandler().getBlockBRByEvent(allArgs);
 
-                                if (blockBR == null) {
+                                if (blockFormat == null) {
                                     player.sendMessage(Messages.get("Event-Not-Found"));
                                     return false;
                                 }
 
-                                if (blockBR.getEvent().getBossbarTitle() == null && blockBR.getEvent().getBossbarColor() == null)
+                                if (blockFormat.getEvent().getBossbarTitle() == null && blockFormat.getEvent().getBossbarColor() == null)
                                     return false;
 
-                                BossBar bossbar = Bukkit.createBossBar(Utils.color("&7Event " + blockBR.getEvent().getName() + " &7is active."), BarColor.YELLOW, BarStyle.SOLID);
+                                BossBar bossbar = Bukkit.createBossBar(Utils.color("&7Event " + blockFormat.getEvent().getName() + " &7is active."), BarColor.YELLOW, BarStyle.SOLID);
 
-                                if (blockBR.getEvent().getBossbarTitle() != null)
-                                    bossbar.setTitle(Utils.color(blockBR.getEvent().getBossbarTitle().replace("%event%", blockBR.getEvent().getName())));
+                                if (blockFormat.getEvent().getBossbarTitle() != null)
+                                    bossbar.setTitle(Utils.color(blockFormat.getEvent().getBossbarTitle().replace("%event%", blockFormat.getEvent().getName())));
 
-                                if (blockBR.getEvent().getBossbarColor() != null)
-                                    bossbar.setColor(BarColor.valueOf(blockBR.getEvent().getBossbarColor()));
+                                if (blockFormat.getEvent().getBossbarColor() != null)
+                                    bossbar.setColor(BarColor.valueOf(blockFormat.getEvent().getBossbarColor()));
 
                                 Utils.bars.put(allArgs, bossbar);
 
@@ -710,7 +721,7 @@ public class Commands implements CommandExecutor, Listener {
             // --------------------------------------------------------------- Debug
             case "debug":
                 Main.getInstance().cO.switchDebug(sender);
-                sender.sendMessage("§eSwitched player debug mode. §c[§4!§c] §7Experimental feature");
+                sender.sendMessage("§eSwitched player debug mode. §c[§4!§c] §7A slightly less experimental feature");
                 break;
             // --------------------------------------------------------------- Help
             case "help":
@@ -757,6 +768,6 @@ public class Commands implements CommandExecutor, Listener {
             }
         }
 
-        plugin.getFiles().saveRegions();
+        plugin.getFiles().regions.save();
     }
 }

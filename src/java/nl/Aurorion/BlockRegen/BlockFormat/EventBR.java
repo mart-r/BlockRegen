@@ -5,6 +5,8 @@ import org.bukkit.boss.BarColor;
 
 public class EventBR {
 
+    // TODO: Redesign & move to Events.yml / Boosts.yml
+
     // Name of the event
     // Todo add displayName X systemName
     private String name;

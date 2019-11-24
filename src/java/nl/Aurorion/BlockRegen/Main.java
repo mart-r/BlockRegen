@@ -5,7 +5,7 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import net.milkbowl.vault.economy.Economy;
 import nl.Aurorion.BlockRegen.BlockFormat.Amount;
-import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
+import nl.Aurorion.BlockRegen.BlockFormat.BlockFormat;
 import nl.Aurorion.BlockRegen.Commands.Commands;
 import nl.Aurorion.BlockRegen.Commands.TabCompleterBR;
 import nl.Aurorion.BlockRegen.Configurations.Files;
@@ -214,7 +214,7 @@ public class Main extends JavaPlugin {
 
                 Material material = Material.valueOf(arr[1].toUpperCase());
 
-                BlockBR blockBR = formatHandler.getBlockBR(material.name());
+                BlockFormat blockBR = formatHandler.getBlockBR(material.name());
 
                 loc.getBlock().setType(blockBR.getReplaceBlock());
 
@@ -268,7 +268,7 @@ public class Main extends JavaPlugin {
         else
             optionHandler.saveWorlds();
 
-        // Reload all files
+        // Reload configuration files
         files.reload();
 
         // Load boolean options from Settings.yml
@@ -369,7 +369,7 @@ public class Main extends JavaPlugin {
         data.set("Regen-Times", regenTimes);
 
         // Save all data
-        getFiles().saveData();
+        getFiles().data.save();
     }
 
     // Register commands and tab completer
@@ -497,7 +497,7 @@ public class Main extends JavaPlugin {
             }
 
             // Save the file
-            files.saveData();
+            files.data.save();
         }
     }
 

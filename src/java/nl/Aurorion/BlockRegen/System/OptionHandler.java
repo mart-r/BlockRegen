@@ -8,6 +8,7 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class OptionHandler {
 
@@ -24,7 +25,7 @@ public class OptionHandler {
         regionCache = new HashMap<>();
         worldCache = new HashMap<>();
 
-        storage = plugin.getFiles().getRegionsCfg();
+        storage = plugin.getFiles().regions;
     }
 
     public void createRegion(String name, Location locA, Location locB) {
@@ -76,10 +77,15 @@ public class OptionHandler {
         for (String name : section.getKeys(false)) {
             ConfigurationSection regSection = section.getConfigurationSection(name);
 
-            RegionBR region = new RegionBR(name, Utils.stringToLocation(regSection.getString("Min")), Utils.stringToLocation(regSection.getString("Max")));
+            RegionBR region;
+
+            if (regSection.getBoolean("polygon")) {
+                region = new RegionBR(name, regSection.getString("polygon-name"));
+            } else
+                region = new RegionBR(name, Utils.stringToLocation(regSection.getString("Min")), Utils.stringToLocation(regSection.getString("Max")));
 
             if (!region.isValid()) {
-                plugin.cO.warn("Region " + name + " is invalid, removing it, sorry.");
+                plugin.cO.warn("Region " + name + " is invalid, removing it.");
                 continue;
             }
 
@@ -110,6 +116,8 @@ public class OptionHandler {
             regSection.set("enabled", reg.isEnabled());
             regSection.set("use-all", reg.isUseAll());
             regSection.set("all-blocks", reg.isAllBlocks());
+            regSection.set("polygon", reg.isPolygon());
+            regSection.set("polygon-name", reg.getPolygonName());
 
             regSection.set("Min", Utils.locationToString(reg.getLocA()));
             regSection.set("Max", Utils.locationToString(reg.getLocB()));
@@ -169,5 +177,13 @@ public class OptionHandler {
 
     public HashMap<String, WorldBR> getWorldCache() {
         return worldCache;
+    }
+
+    public List<String> getRegions() {
+        return new ArrayList<>(regionCache.keySet());
+    }
+
+    public List<String> getWorlds() {
+        return new ArrayList<>(worldCache.keySet());
     }
 }

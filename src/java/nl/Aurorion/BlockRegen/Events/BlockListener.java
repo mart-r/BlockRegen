@@ -1,7 +1,7 @@
 package nl.Aurorion.BlockRegen.Events;
 
 import com.palmergames.bukkit.towny.object.TownyUniverse;
-import nl.Aurorion.BlockRegen.BlockFormat.BlockBR;
+import nl.Aurorion.BlockRegen.BlockFormat.BlockFormat;
 import nl.Aurorion.BlockRegen.Main;
 import nl.Aurorion.BlockRegen.Messages;
 import nl.Aurorion.BlockRegen.System.OptionHandler;
@@ -57,20 +57,20 @@ public class BlockListener implements Listener {
 
         // Bypass command
         if (Utils.bypass.contains(player.getName())) {
-            Main.getInstance().cO.debug("Bypass found");
+            Main.getInstance().cO.debug("Bypass found", player);
             return;
         }
 
         // Already mined, waiting for regen to happen
         if (Utils.getProcess(block.getLocation()) != null) {
-            Main.getInstance().cO.debug("Already mined");
+            Main.getInstance().cO.debug("Already mined", player);
             event.setCancelled(true);
             return;
         }
 
         // Data check
         if (Utils.blockCheck.contains(player.getName())) {
-            Main.getInstance().cO.debug("Data check found");
+            Main.getInstance().cO.debug("Data check found", player);
             event.setCancelled(true);
             player.sendMessage(Messages.get("Data-Check").replace("%block%", blockType));
             return;
@@ -80,7 +80,7 @@ public class BlockListener implements Listener {
         if (plugin.isUseTowny())
             if (TownyUniverse.getTownBlock(block.getLocation()) != null)
                 if (TownyUniverse.getTownBlock(block.getLocation()).hasTown()) {
-                    Main.getInstance().cO.debug("Towny support intercept.");
+                    Main.getInstance().cO.debug("Towny support intercept.", player);
                     return;
                 }
 
@@ -89,7 +89,7 @@ public class BlockListener implements Listener {
             String noBuildReason = plugin.getGriefPrevention().allowBreak(player, block, block.getLocation(), event);
 
             if (noBuildReason != null) {
-                Main.getInstance().cO.debug("Grief prevention intercept.");
+                Main.getInstance().cO.debug("Grief prevention intercept.", player);
                 return;
             }
         }
@@ -115,6 +115,11 @@ public class BlockListener implements Listener {
 
             // Declare region
             RegionBR region = optionHandler.getRegion(block.getLocation());
+
+            if (!player.hasPermission("blockregen.region." + region.getName()) && !player.hasPermission("blockregen.region.*")) {
+                plugin.cO.debug("No region permission");
+                return;
+            }
 
             if (!region.isEnabled())
                 return;
@@ -156,6 +161,11 @@ public class BlockListener implements Listener {
             // Filter blocks based on world configuration
             WorldBR worldBR = optionHandler.getWorld(world.getName());
 
+            if (!player.hasPermission("blockregen.world." + worldBR.getName()) && !player.hasPermission("blockregen.world.*")) {
+                plugin.cO.debug("No world permission");
+                return;
+            }
+
             if (!worldBR.isEnabled())
                 return;
 
@@ -195,11 +205,13 @@ public class BlockListener implements Listener {
         }
 
         // Proceed with check and the block break
-        BlockBR blockBR = plugin.getFormatHandler().getBlockBR(blockType);
+        BlockFormat blockFormat = plugin.getFormatHandler().getBlockBR(blockType);
 
         // Check if conditions are met
-        if (!blockBR.check(player))
+        if (!blockFormat.check(player)) {
+            event.setCancelled(true);
             return;
+        }
 
         event.setDropItems(false);
 
@@ -221,29 +233,29 @@ public class BlockListener implements Listener {
         Material type = block.getType();
         Location loc = block.getLocation();
 
-        BlockBR blockBR = plugin.getFormatHandler().getBlockBR(blockType);
+        BlockFormat blockFormat = plugin.getFormatHandler().getBlockBR(blockType);
 
         // Reward the player
-        blockBR.reward(player, block, expToDrop);
+        blockFormat.reward(player, block, expToDrop);
 
         // Replacing the block ---------------------------------------------------------------------------------
 
         // DOUBLE PLANTS
-        if ((blockBR.getBlockType().equals(Material.SUNFLOWER) || blockBR.getBlockType().equals(Material.ROSE_BUSH)) && !block.getRelative(BlockFace.DOWN).getType().equals(Material.AIR))
-            Utils.setFlower(block, blockBR.getReplaceBlock());
+        if ((blockFormat.getBlockType().equals(Material.SUNFLOWER) || blockFormat.getBlockType().equals(Material.ROSE_BUSH)) && !block.getRelative(BlockFace.DOWN).getType().equals(Material.AIR))
+            Utils.setFlower(block, blockFormat.getReplaceBlock());
         else {
             // Replace the block, needs to be delayed a bit.
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    block.setType(blockBR.getReplaceBlock());
+                    block.setType(blockFormat.getReplaceBlock());
                 }
             }.runTaskLater(plugin, 1);
         }
 
-        if (blockBR.isRegenerate()) {
+        if (blockFormat.isRegenerate()) {
             // Check for number of breaks
-            if (blockBR.getRegenTimes() > 0) {
+            if (blockFormat.getRegenTimes() > 0) {
                 if (Utils.regenTimesBlocks.containsKey(block.getLocation())) {
                     if ((Utils.regenTimesBlocks.get(block.getLocation()) - 1) <= 0) {
                         Utils.regenTimesBlocks.remove(block.getLocation());
@@ -251,10 +263,10 @@ public class BlockListener implements Listener {
                     } else
                         Utils.regenTimesBlocks.put(block.getLocation(), Utils.regenTimesBlocks.get(block.getLocation()) - 1);
                 } else
-                    Utils.regenTimesBlocks.put(block.getLocation(), blockBR.getRegenTimes() - 1);
+                    Utils.regenTimesBlocks.put(block.getLocation(), blockFormat.getRegenTimes() - 1);
             }
 
-            plugin.cO.debug("Breaks left: " + (Utils.regenTimesBlocks.containsKey(block.getLocation()) ? Utils.regenTimesBlocks.get(block.getLocation()) : "Unlimited"));
+            plugin.cO.debug("Breaks left: " + (Utils.regenTimesBlocks.containsKey(block.getLocation()) ? Utils.regenTimesBlocks.get(block.getLocation()) : "Unlimited"), player);
 
             // Data Recovery -------------------------------------------------------------------------------------------
             if (plugin.isDataRecovery()) {
@@ -271,7 +283,7 @@ public class BlockListener implements Listener {
                 recoverySection.set(blockType, locations);
 
                 // Save instantly
-                plugin.getFiles().saveData();
+                plugin.getFiles().data.save();
             }
 
             // Actual Regeneration -------------------------------------------------------------------------------------

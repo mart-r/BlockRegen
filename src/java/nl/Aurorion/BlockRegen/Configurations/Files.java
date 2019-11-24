@@ -6,7 +6,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 public class Files {
 
     // Switched recovery options from Recovery.yml to Data.yml
-    private Configuration settings, messages, blocklist, regions, data;
+    public Configuration settings, messages, blocklist, regions, data;
 
     public Files(Main plugin) {
 
@@ -22,7 +22,7 @@ public class Files {
         // Region storage
         regions = new Configuration(plugin, "Regions");
 
-        // Data.yml ==> storing regen times, Recovery data
+        // Data.yml ==> storing regen times, Recovery data, Persist
         data = new Configuration(plugin, "Data");
 
         // Recovery section created if needed
@@ -35,57 +35,25 @@ public class Files {
         return settings.getYaml();
     }
 
-    public void reloadSettings() {
-        settings.reload();
-    }
-
     public FileConfiguration getMessages() {
         return messages.getYaml();
-    }
-
-    public void reloadMessages() {
-        messages.reload();
     }
 
     public FileConfiguration getBlocklist() {
         return blocklist.getYaml();
     }
 
-    public void reloadBlocklist() {
-        blocklist.reload();
-    }
-
     public FileConfiguration getRegions() {
         return regions.getYaml();
     }
 
-    public Configuration getRegionsCfg() {
-        return regions;
-    }
-
-    public void reloadRegions() {
-        regions.reload();
-    }
-
-    public void saveRegions() {
-        regions.save();
-    }
-
-    public void saveMessages() {
-        messages.save();}
-
-    public void reload() {
-        reloadBlocklist();
-        reloadMessages();
-        reloadSettings();
-        reloadRegions();
-    }
-
-    public void saveData() {
-        data.save();
-    }
-
     public FileConfiguration getData() {
         return data.getYaml();
+    }
+
+    public void reload() {
+        blocklist.reload();
+        settings.reload();
+        messages.reload();
     }
 }
