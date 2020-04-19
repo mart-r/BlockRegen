@@ -2,7 +2,6 @@ package nl.Aurorion.BlockRegen;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import net.milkbowl.vault.economy.Economy;
 import nl.Aurorion.BlockRegen.Commands.Commands;
 import nl.Aurorion.BlockRegen.Commands.TabCompleterBR;
@@ -41,8 +40,6 @@ public class Main extends JavaPlugin {
     private Economy econ;
     public WorldEditPlugin worldEdit;
     public WorldGuardPlugin worldGuard;
-
-    private GriefPrevention griefPrevention;
 
     private Files files;
 
@@ -322,10 +319,6 @@ public class Main extends JavaPlugin {
 
     public boolean getJobs() {
         return this.getServer().getPluginManager().getPlugin("Jobs") != null;
-    }
-
-    public GriefPrevention getGriefPrevention() {
-        return griefPrevention;
     }
 
     public Files getFiles() {

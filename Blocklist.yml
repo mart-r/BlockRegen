@@ -167,3 +167,11 @@ Blocks:
       amount:
         low: 1
         high: 3
+  GOLD_BLOCK:
+    replace-block: IRON_BLOCK
+    natural-break: true
+    regen-delay: 5
+    permission:
+      - "permission.1"
+      - "AND permission.2"
+      - "OR permission.3"

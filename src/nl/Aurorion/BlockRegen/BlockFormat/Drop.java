@@ -140,11 +140,11 @@ public class Drop {
         ItemMeta meta = item.getItemMeta();
 
         if (Main.getInstance().isPlaceholderAPI()) {
-            meta.setDisplayName(Utils.color(PlaceholderAPI.setPlaceholders(player, displayName)));
+            meta.setDisplayName(Utils.color(PlaceholderAPI.setPlaceholders(player, displayName.replace("%player%", player.getName()))));
             for (String line : lore)
-                lore.set(lore.indexOf(line), PlaceholderAPI.setPlaceholders(player, line));
+                lore.set(lore.indexOf(line), PlaceholderAPI.setPlaceholders(player, line.replace("%player%", player.getName())));
         } else {
-            meta.setDisplayName(Utils.color(displayName));
+            meta.setDisplayName(Utils.color(displayName.replace("%player%", player.getName())));
         }
 
         meta.setLore(lore);

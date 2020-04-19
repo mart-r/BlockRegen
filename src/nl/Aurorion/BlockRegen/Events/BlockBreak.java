@@ -33,7 +33,7 @@ public class BlockBreak implements Listener {
         this.main = main;
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onBreak(BlockBreakEvent event) {
 
         Player player = event.getPlayer();
@@ -45,6 +45,9 @@ public class BlockBreak implements Listener {
 
         FileConfiguration settings = main.getFiles().getSettings();
         Set<String> blockTypes = main.getFormatHandler().getBlockNames();
+
+        if (event.isCancelled())
+            return;
 
         // Bypass command
         if (Utils.bypass.contains(player.getName()))
@@ -68,14 +71,6 @@ public class BlockBreak implements Listener {
             if (TownyUniverse.getTownBlock(block.getLocation()) != null)
                 if (TownyUniverse.getTownBlock(block.getLocation()).hasTown())
                     return;
-
-        // GriefPrevention support
-        if (main.isUseGP()) {
-            String noBuildReason = main.getGriefPrevention().allowBreak(player, block, block.getLocation(), event);
-
-            if (noBuildReason != null)
-                return;
-        }
 
         if (!settings.getStringList("Worlds-Enabled").contains(world.getName()))
             return;
@@ -125,10 +120,14 @@ public class BlockBreak implements Listener {
                     return;
                 }
 
+                // On versions above 1.9 the Event.setDropItems(bool) becomes available.
                 if (Main.getVersion().contains("1_12") || Main.getVersion().contains("1_10") || Main.getVersion().contains("1_11")) {
                     event.setDropItems(false);
                 } else
-                    event.setCancelled(true);
+                    // TODO Replace setCancelled(true) so the durability applies to tool held.
+                    // Cancel on 1.8
+                    event.getBlock().getDrops().clear();
+                    // event.setCancelled(true);
 
                 event.setExpToDrop(0);
 
@@ -145,7 +144,11 @@ public class BlockBreak implements Listener {
                     if (Main.getVersion().contains("1_12") || Main.getVersion().contains("1_10") || Main.getVersion().contains("1_11")) {
                         event.setDropItems(false);
                     } else
-                        event.setCancelled(true);
+                        // TODO Replace setCancelled(true) so the durability applies to tool held.
+                        // Should actually work on all versions.
+                        // Cancel on 1.8
+                        event.getBlock().getDrops().clear();
+                        // event.setCancelled(true);
 
                     event.setExpToDrop(0);
 

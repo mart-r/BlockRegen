@@ -48,7 +48,7 @@ public class BlockBR {
     private List<String> toolsRequired;
     private List<String> enchantsRequired;
     private JobRequirement jobRequirement;
-    private String permission;
+    private List<String> permissions;
 
     private List<Drop> drops;
 
@@ -117,14 +117,14 @@ public class BlockBR {
             for (String command : consoleCommands) {
                 if (Main.getInstance().isPlaceholderAPI())
                     command = PlaceholderAPI.setPlaceholders(player, command);
-                Main.getInstance().getServer().dispatchCommand(Main.getInstance().getServer().getConsoleSender(), command);
+                Main.getInstance().getServer().dispatchCommand(Main.getInstance().getServer().getConsoleSender(), command.replace("%player%", player.getName()));
             }
 
         if (!playerCommands.isEmpty())
             for (String command : playerCommands) {
                 if (Main.getInstance().isPlaceholderAPI())
                     command = PlaceholderAPI.setPlaceholders(player, command);
-                Main.getInstance().getServer().dispatchCommand(player, command);
+                Main.getInstance().getServer().dispatchCommand(player, command.replace("%player%", player.getName()));
             }
 
         // Items
@@ -142,8 +142,6 @@ public class BlockBR {
 
                     Main.getInstance().cO.debug("EXP: " + drop.getExpAmount().toString() + " AMOUNT:" + drop.getExpAmount().getAmount());
                     expDrop = drop.getExpAmount().getAmount();
-
-                    Main.getInstance().cO.debug("Loaded events: " + Utils.events.toString() + " Event: " + Utils.removeColors(event.getName()));
 
                     // Apply event boosters
                     if (event != null)
@@ -226,8 +224,9 @@ public class BlockBR {
 
         // Money
         int moneyToGive = money.getAmount();
+
         if (moneyToGive != 0 && Main.getInstance().getEconomy() != null) {
-            EconomyResponse response = Main.getInstance().getEconomy().depositPlayer(player, moneyToGive);
+                EconomyResponse response = Main.getInstance().getEconomy().depositPlayer(player, moneyToGive);
             if (response.transactionSuccess())
                 Main.getInstance().cO.debug("Gave " + moneyToGive + " to " + player.getName());
             else
@@ -246,12 +245,11 @@ public class BlockBR {
     public boolean check(Player player) {
 
         // Permission check
-        if (permission != null)
-            if (!permission.equals(""))
-                if (!player.hasPermission(permission)) {
-                    player.sendMessage(Messages.get("Permission-Error").replace("%permission%", permission));
-                    return false;
-                }
+        if (!permissions.isEmpty())
+            if (!checkPermissions(player)) {
+                player.sendMessage(Messages.get("Permission-Error").replace("%permission%", Utils.listToString(permissions, "&f, &7", "&cNo permissions configured.")));
+                return false;
+            }
 
         Main.getInstance().cO.debug("Passed permission check");
 
@@ -340,6 +338,27 @@ public class BlockBR {
         return true;
     }
 
+    private boolean checkPermissions(Player p) {
+        List<String> permissions = this.permissions;
+
+        boolean pass = p.hasPermission(permissions.get(0));
+
+        for (int i = 1; i < permissions.size(); i++) {
+            String perm = permissions.get(i);
+
+            if (perm.startsWith("AND ")) {
+                pass = pass && p.hasPermission(perm.replace("AND ", ""));
+            } else {
+                // OR, perms with no prefix are taken as OR as well.
+                if (p.hasPermission(perm.replace("OR ", ""))) {
+                    return true;
+                }
+            }
+        }
+
+        return pass;
+    }
+
     public Material getReplaceBlock() {
         return replaceBlock;
     }
@@ -373,29 +392,23 @@ public class BlockBR {
     }
 
     public void setConsoleCommands(List<String> consoleCommands) {
-        if (consoleCommands == null)
-            this.consoleCommands = new ArrayList<>();
-        else
-            this.consoleCommands = consoleCommands;
+        this.consoleCommands = consoleCommands == null ? new ArrayList<>() : consoleCommands;
     }
 
     public List<String> getPlayerCommands() {
         return playerCommands;
     }
 
-    public String getPermission() {
-        return permission;
+    public List<String> getPermissions() {
+        return permissions;
     }
 
-    public void setPermission(String permission) {
-        this.permission = permission;
+    public void setPermissions(List<String> permissions) {
+        this.permissions = permissions == null ? new ArrayList<>() : permissions;
     }
 
     public void setPlayerCommands(List<String> playerCommands) {
-        if (playerCommands == null)
-            this.playerCommands = new ArrayList<>();
-        else
-            this.playerCommands = playerCommands;
+        this.playerCommands = playerCommands == null ? new ArrayList<>() : consoleCommands;
     }
 
     public List<String> getToolsRequired() {

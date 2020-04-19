@@ -365,7 +365,5 @@ public class Commands implements CommandExecutor, Listener {
         }
 
         main.getFiles().saveRegions();
-
     }
-
 }

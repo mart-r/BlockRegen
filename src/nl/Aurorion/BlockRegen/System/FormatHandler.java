@@ -96,7 +96,6 @@ public class FormatHandler {
                 e.printStackTrace();
             }
 
-
         if (block.isValid()) {
             main.cO.debug(name + ": Valid");
 
@@ -193,8 +192,8 @@ public class FormatHandler {
             block.setEnchantsRequired(Utils.stringToList(section.getString("enchant-required")));
             main.cO.debug(name + ": enchantsRequired " + block.getEnchantsRequired().toString());
 
-            block.setPermission(section.getString("permission"));
-            main.cO.debug(name + ": permission " + block.getPermission());
+            block.setPermissions(getStringOrList(name, "permission", "permissions"));
+            main.cO.debug(name + ": permission " + block.getPermissions());
 
             if (section.contains("jobs-check")) {
                 block.setJobRequirement(new JobRequirement(section.getString("jobs-check").split(";")[0], Integer.valueOf(section.getString("jobs-check").split(";")[1])));
