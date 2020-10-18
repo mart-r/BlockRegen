@@ -408,7 +408,7 @@ public class BlockBR {
     }
 
     public void setPlayerCommands(List<String> playerCommands) {
-        this.playerCommands = playerCommands == null ? new ArrayList<>() : consoleCommands;
+        this.playerCommands = playerCommands == null ? new ArrayList<>() : playerCommands;
     }
 
     public List<String> getToolsRequired() {
