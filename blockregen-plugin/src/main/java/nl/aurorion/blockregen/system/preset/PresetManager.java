@@ -1,10 +1,10 @@
 package nl.aurorion.blockregen.system.preset;
 
-import com.cryptomorin.xseries.XMaterial;
 import com.cryptomorin.xseries.XSound;
 import com.google.common.base.Strings;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.ConsoleOutput;
+import nl.aurorion.blockregen.NodeData;
 import nl.aurorion.blockregen.system.event.struct.PresetEvent;
 import nl.aurorion.blockregen.system.preset.struct.Amount;
 import nl.aurorion.blockregen.system.preset.struct.BlockPreset;
@@ -14,8 +14,12 @@ import nl.aurorion.blockregen.system.preset.struct.material.DynamicMaterial;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.jetbrains.annotations.Contract;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public class PresetManager {
 
@@ -23,8 +27,25 @@ public class PresetManager {
 
     private final Map<String, BlockPreset> presets = new HashMap<>();
 
+    private final Map<String, NodeData> typeAliases = new HashMap<>();
+
     public PresetManager(BlockRegen plugin) {
         this.plugin = plugin;
+    }
+
+    @Contract("null -> null")
+    public NodeData getNodeData(String key) {
+        if (Strings.isNullOrEmpty(key))
+            return null;
+
+        return typeAliases.containsKey(key) ? typeAliases.get(key) : NodeData.fromMaterial(key.toUpperCase());
+    }
+
+    private String replaceAll(String str) {
+        for (Map.Entry<String, NodeData> entry : typeAliases.entrySet()) {
+            str = str.replace(entry.getKey(), entry.getValue().getAsString(true));
+        }
+        return str;
     }
 
     public Optional<BlockPreset> getPreset(String name) {
@@ -42,6 +63,23 @@ public class PresetManager {
     }
 
     public void loadAll() {
+
+        typeAliases.clear();
+
+        ConfigurationSection aliases = plugin.getFiles().getBlockList().getFileConfiguration().getConfigurationSection("Types");
+
+        if (aliases != null) {
+            for (String key : aliases.getKeys(false)) {
+                NodeData value = NodeData.fromString(aliases.getString(key));
+                if (value == null) {
+                    ConsoleOutput.getInstance().warn("Invalid NodeData " + key);
+                    continue;
+                }
+                typeAliases.put(key, value);
+            }
+            ConsoleOutput.getInstance().info("Loaded " + typeAliases.size() + " type aliase(s)...");
+        }
+
         presets.clear();
 
         // Clear all events before loading.
@@ -74,14 +112,14 @@ public class PresetManager {
         if (Strings.isNullOrEmpty(targetMaterial))
             targetMaterial = name;
 
-        Optional<XMaterial> xMaterial = XMaterial.matchXMaterial(targetMaterial.toUpperCase());
+        NodeData targetData = getNodeData(targetMaterial);
 
-        if (!xMaterial.isPresent()) {
+        if (targetData == null) {
             ConsoleOutput.getInstance().warn("Could not load preset " + name + ", invalid target material.");
             return;
         }
 
-        preset.setTargetMaterial(xMaterial.get());
+        preset.setTargetMaterial(targetData);
 
         // Replace material
         String replaceMaterial = section.getString("replace-block");
@@ -90,7 +128,7 @@ public class PresetManager {
             replaceMaterial = "AIR";
 
         try {
-            preset.setReplaceMaterial(DynamicMaterial.fromString(replaceMaterial));
+            preset.setReplaceMaterial(DynamicMaterial.fromString(replaceAll(replaceMaterial)));
         } catch (IllegalArgumentException e) {
             plugin.getConsoleOutput().err("Dynamic material ( " + replaceMaterial + " ) in replace-block material for " + name + " is invalid: " + e.getMessage());
             if (plugin.getConsoleOutput().isDebug())
@@ -105,7 +143,7 @@ public class PresetManager {
             regenerateInto = targetMaterial;
 
         try {
-            preset.setRegenMaterial(DynamicMaterial.fromString(regenerateInto));
+            preset.setRegenMaterial(DynamicMaterial.fromString(replaceAll(regenerateInto)));
         } catch (IllegalArgumentException e) {
             plugin.getConsoleOutput().err("Dynamic material ( " + regenerateInto + " ) in regenerate-into material for " + name + " is invalid: " + e.getMessage());
             if (plugin.getConsoleOutput().isDebug())

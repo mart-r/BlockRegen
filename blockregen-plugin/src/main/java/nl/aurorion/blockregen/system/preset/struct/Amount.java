@@ -5,7 +5,7 @@ import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
 import nl.aurorion.blockregen.ConsoleOutput;
-import nl.aurorion.blockregen.util.ParseUtil;
+import nl.aurorion.blockregen.ParseUtil;
 import org.bukkit.configuration.ConfigurationSection;
 
 public class Amount {

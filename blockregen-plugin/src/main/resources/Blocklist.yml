@@ -9,6 +9,8 @@
 # Note no.2: Most Strings (commands, names, lores) allow PlaceholderAPI placeholders.
 # Note no.3: Most Amounts (money, regen-delay, amount) support dynamic amounts (random) with a low and high.
 
+Types: {}
+
 Blocks:
   # The block that gets broken
   DIAMOND_ORE:

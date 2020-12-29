@@ -1,14 +1,11 @@
 package nl.aurorion.blockregen.system.preset.struct.material;
 
-import com.cryptomorin.xseries.XMaterial;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.Setter;
 import nl.aurorion.blockregen.BlockRegen;
-import nl.aurorion.blockregen.ConsoleOutput;
-import nl.aurorion.blockregen.util.ParseUtil;
+import nl.aurorion.blockregen.NodeData;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -16,20 +13,20 @@ public class DynamicMaterial {
 
     @Getter
     @Setter
-    private XMaterial defaultMaterial;
+    private NodeData defaultMaterial;
 
-    private final List<XMaterial> valuedMaterials = new ArrayList<>();
+    private final List<NodeData> valuedMaterials = new ArrayList<>();
 
-    public DynamicMaterial(XMaterial defaultMaterial) {
+    public DynamicMaterial(NodeData defaultMaterial) {
         this.defaultMaterial = defaultMaterial;
     }
 
-    public DynamicMaterial(XMaterial defaultMaterial, Collection<XMaterial> valuedMaterials) {
+    public DynamicMaterial(NodeData defaultMaterial, Collection<NodeData> valuedMaterials) {
         this.defaultMaterial = defaultMaterial;
         this.valuedMaterials.addAll(valuedMaterials);
     }
 
-    public List<XMaterial> getValuedMaterials() {
+    public List<NodeData> getValuedMaterials() {
         return Collections.unmodifiableList(valuedMaterials);
     }
 
@@ -38,14 +35,14 @@ public class DynamicMaterial {
         if (Strings.isNullOrEmpty(input))
             throw new IllegalArgumentException("Input string cannot be null");
 
-        input = input.replace(" ", "").trim().toUpperCase();
+        input = input.trim();
 
         List<String> materials;
-        List<XMaterial> valuedMaterials = new ArrayList<>();
-        XMaterial defaultMaterial = null;
+        List<NodeData> valuedMaterials = new ArrayList<>();
+        NodeData defaultMaterial = null;
 
         if (!input.contains(";")) {
-            defaultMaterial = ParseUtil.parseMaterial(input, true);
+            defaultMaterial = NodeData.fromString(input);
 
             if (defaultMaterial == null)
                 throw new IllegalArgumentException("Invalid block material " + input);
@@ -58,7 +55,7 @@ public class DynamicMaterial {
             throw new IllegalArgumentException("Dynamic material " + input + " doesn't have the correct syntax");
 
         if (materials.size() == 1) {
-            defaultMaterial = ParseUtil.parseMaterial(materials.get(0), true);
+            defaultMaterial = NodeData.fromString(materials.get(0));
 
             if (defaultMaterial == null)
                 throw new IllegalArgumentException("Invalid block material " + materials.get(0));
@@ -71,7 +68,7 @@ public class DynamicMaterial {
         for (String material : materials) {
 
             if (!material.contains(":")) {
-                defaultMaterial = ParseUtil.parseMaterial(material, true);
+                defaultMaterial = NodeData.fromMaterial(material);
 
                 if (defaultMaterial == null)
                     throw new IllegalArgumentException("Invalid block material " + material);
@@ -82,7 +79,7 @@ public class DynamicMaterial {
             int chance = Integer.parseInt(material.split(":")[1]);
             total += chance;
 
-            XMaterial mat = ParseUtil.parseMaterial(material.split(":")[0], true);
+            NodeData mat = NodeData.fromString(material.split(":")[0]);
 
             if (mat == null)
                 continue;
@@ -98,13 +95,13 @@ public class DynamicMaterial {
         return new DynamicMaterial(defaultMaterial, valuedMaterials);
     }
 
-    private XMaterial pickRandom() {
-        XMaterial pickedMaterial = valuedMaterials.get(BlockRegen.getInstance().getRandom().nextInt(valuedMaterials.size()));
+    private NodeData pickRandom() {
+        NodeData pickedMaterial = valuedMaterials.get(BlockRegen.getInstance().getRandom().nextInt(valuedMaterials.size()));
         return pickedMaterial != null ? pickedMaterial : defaultMaterial;
     }
 
     @NotNull
-    public XMaterial get() {
+    public NodeData get() {
         return valuedMaterials.isEmpty() ? defaultMaterial : pickRandom();
     }
 }

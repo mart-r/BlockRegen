@@ -7,6 +7,7 @@ import me.ryanhamshire.GriefPrevention.GriefPrevention;
 import net.milkbowl.vault.economy.Economy;
 import nl.aurorion.blockregen.commands.Commands;
 import nl.aurorion.blockregen.configuration.Files;
+import nl.aurorion.blockregen.json.JsonMessenger;
 import nl.aurorion.blockregen.listeners.BlockListener;
 import nl.aurorion.blockregen.listeners.PlayerListener;
 import nl.aurorion.blockregen.particles.ParticleManager;
@@ -82,6 +83,9 @@ public class BlockRegen extends JavaPlugin {
     @Getter
     private GsonHelper gsonHelper;
 
+    @Getter
+    private JsonMessenger jsonMessenger;
+
     @Override
     public void onEnable() {
         random = new Random();
@@ -97,6 +101,8 @@ public class BlockRegen extends JavaPlugin {
         consoleOutput.info("Running on version " + versionManager.getVersion());
 
         versionManager.load();
+
+        jsonMessenger = new JsonMessenger(this);
 
         gsonHelper = new GsonHelper();
 

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.ConsoleOutput;
+import nl.aurorion.blockregen.NodeData;
 import nl.aurorion.blockregen.util.LocationUtil;
 import nl.aurorion.blockregen.api.BlockRegenBlockRegenerationEvent;
 import nl.aurorion.blockregen.system.preset.struct.BlockPreset;
@@ -44,13 +45,13 @@ public class RegenerationProcess implements Runnable {
     @Getter
     private transient long regenerationTime;
 
-    private transient XMaterial replaceMaterial;
+    private transient NodeData replaceMaterial;
 
     @Getter
     private long timeLeft = -1;
 
     @Setter
-    private transient XMaterial regenerateInto;
+    private transient NodeData regenerateInto;
 
     private transient BukkitTask task;
 
@@ -66,13 +67,13 @@ public class RegenerationProcess implements Runnable {
         getReplaceMaterial();
     }
 
-    public XMaterial getRegenerateInto() {
+    public NodeData getRegenerateInto() {
         if (this.regenerateInto == null)
             this.regenerateInto = preset.getRegenMaterial().get();
         return this.regenerateInto;
     }
 
-    public XMaterial getReplaceMaterial() {
+    public NodeData getReplaceMaterial() {
         if (this.replaceMaterial == null)
             this.replaceMaterial = preset.getReplaceMaterial().get();
         return this.replaceMaterial;
@@ -157,7 +158,7 @@ public class RegenerationProcess implements Runnable {
         BlockRegen plugin = BlockRegen.getInstance();
 
         // Set type
-        XMaterial regenerateInto = getRegenerateInto();
+        NodeData regenerateInto = getRegenerateInto();
         if (regenerateInto != null) {
             plugin.getVersionManager().getMethods().setType(block, regenerateInto);
             ConsoleOutput.getInstance().debug("Regenerated block " + originalMaterial + " into " + regenerateInto.toString());

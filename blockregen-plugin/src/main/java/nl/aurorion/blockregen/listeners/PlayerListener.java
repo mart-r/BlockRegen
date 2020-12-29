@@ -2,6 +2,7 @@ package nl.aurorion.blockregen.listeners;
 
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.Message;
+import nl.aurorion.blockregen.NodeData;
 import nl.aurorion.blockregen.util.Utils;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -9,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 public class PlayerListener implements Listener {
 
@@ -22,9 +24,14 @@ public class PlayerListener implements Listener {
     public void onInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
 
+        if (event.getHand() == EquipmentSlot.OFF_HAND)
+            return;
+
         if (event.getClickedBlock() != null && Utils.dataCheck.contains(player.getUniqueId())) {
             event.setCancelled(true);
-            player.sendMessage(Message.DATA_CHECK.get(player).replace("%block%", event.getClickedBlock().getType().toString()));
+            //player.sendMessage(Message.DATA_CHECK.get(player).replace("%block%", event.getClickedBlock().getType().toString()));
+            NodeData nodeData = NodeData.fromBlock(event.getClickedBlock());
+            plugin.getJsonMessenger().sendCopyMessage(player, "Correct block data: " + nodeData.getAsString(true) + " ( click to copy)", nodeData.getAsString(true));
         }
     }
 

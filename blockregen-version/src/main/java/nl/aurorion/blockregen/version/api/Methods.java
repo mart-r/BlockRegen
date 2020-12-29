@@ -1,6 +1,7 @@
 package nl.aurorion.blockregen.version.api;
 
-import com.cryptomorin.xseries.XMaterial;
+
+import nl.aurorion.blockregen.NodeData;
 import org.bukkit.block.Block;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
@@ -23,9 +24,9 @@ public interface Methods {
         return null;
     }
 
-    void setType(@NotNull Block block, @NotNull XMaterial xMaterial);
+    void setType(@NotNull Block block, @NotNull NodeData nodeData);
 
-    boolean compareType(@NotNull Block block, @NotNull XMaterial xMaterial);
+    boolean compareType(@NotNull Block block, @NotNull NodeData nodeData);
 
     ItemStack getItemInMainHand(@NotNull Player player);
 }

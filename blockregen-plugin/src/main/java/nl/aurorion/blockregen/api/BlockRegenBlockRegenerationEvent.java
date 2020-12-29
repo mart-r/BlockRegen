@@ -1,8 +1,8 @@
 package nl.aurorion.blockregen.api;
 
-import com.cryptomorin.xseries.XMaterial;
 import lombok.Getter;
 import lombok.Setter;
+import nl.aurorion.blockregen.NodeData;
 import nl.aurorion.blockregen.system.regeneration.struct.RegenerationProcess;
 import org.bukkit.event.Cancellable;
 
@@ -32,11 +32,11 @@ public class BlockRegenBlockRegenerationEvent extends BlockRegenBlockEvent imple
      * Shortcuts.
      * */
 
-    public XMaterial getRegenerateInto() {
+    public NodeData getRegenerateInto() {
         return regenerationProcess.getRegenerateInto();
     }
 
-    public void setRegenerateInto(XMaterial material) {
-        regenerationProcess.setRegenerateInto(material);
+    public void setRegenerateInto(NodeData nodeData) {
+        regenerationProcess.setRegenerateInto(nodeData);
     }
 }

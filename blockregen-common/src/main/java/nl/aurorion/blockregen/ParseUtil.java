@@ -1,11 +1,9 @@
-package nl.aurorion.blockregen.util;
+package nl.aurorion.blockregen;
 
 import com.cryptomorin.xseries.XEnchantment;
 import com.cryptomorin.xseries.XMaterial;
 import com.google.common.base.Strings;
 import lombok.experimental.UtilityClass;
-import nl.aurorion.blockregen.BlockRegen;
-import nl.aurorion.blockregen.ConsoleOutput;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.jetbrains.annotations.Nullable;
@@ -57,14 +55,12 @@ public class ParseUtil {
         Optional<XMaterial> xMaterial = XMaterial.matchXMaterial(input);
 
         if (!xMaterial.isPresent()) {
-            ConsoleOutput.getInstance().debug("Could not parse material " + input);
             return null;
         }
 
         Material material = xMaterial.get().parseMaterial();
 
         if (material != null && blocksOnly.length > 0 && blocksOnly[0] && !material.isBlock()) {
-            BlockRegen.getInstance().getConsoleOutput().debug("Material " + input + " is not a block.");
             return null;
         }
 
