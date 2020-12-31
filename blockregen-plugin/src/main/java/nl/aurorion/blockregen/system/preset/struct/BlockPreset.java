@@ -2,15 +2,15 @@ package nl.aurorion.blockregen.system.preset.struct;
 
 import com.cryptomorin.xseries.XSound;
 import lombok.Data;
-import nl.aurorion.blockregen.NodeData;
 import nl.aurorion.blockregen.system.preset.struct.material.DynamicMaterial;
+import nl.aurorion.blockregen.version.api.INodeData;
 
 @Data
 public class BlockPreset {
 
     private final String name;
 
-    private NodeData targetMaterial;
+    private INodeData targetMaterial;
 
     private DynamicMaterial replaceMaterial;
     private DynamicMaterial regenMaterial;
@@ -20,6 +20,7 @@ public class BlockPreset {
     private String particle;
     private String regenerationParticle;
 
+    private boolean affectDrops;
     private boolean naturalBreak;
     private boolean applyFortune;
     private boolean dropNaturally;

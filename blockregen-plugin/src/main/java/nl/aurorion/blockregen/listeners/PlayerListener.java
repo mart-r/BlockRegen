@@ -2,8 +2,8 @@ package nl.aurorion.blockregen.listeners;
 
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.Message;
-import nl.aurorion.blockregen.NodeData;
 import nl.aurorion.blockregen.util.Utils;
+import nl.aurorion.blockregen.version.api.INodeData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -29,9 +29,13 @@ public class PlayerListener implements Listener {
 
         if (event.getClickedBlock() != null && Utils.dataCheck.contains(player.getUniqueId())) {
             event.setCancelled(true);
-            //player.sendMessage(Message.DATA_CHECK.get(player).replace("%block%", event.getClickedBlock().getType().toString()));
-            NodeData nodeData = NodeData.fromBlock(event.getClickedBlock());
-            plugin.getJsonMessenger().sendCopyMessage(player, "Correct block data: " + nodeData.getAsString(true) + " ( click to copy)", nodeData.getAsString(true));
+            INodeData nodeData = plugin.getVersionManager().obtainNodeData(event.getClickedBlock());
+            if (plugin.getVersionManager().isAbove("1.12", false))
+                plugin.getJsonMessenger().sendCopyMessage(player, "Block data: " + nodeData.getAsString(true) + " ( click to copy)", nodeData.getAsString(true));
+            else {
+                player.sendMessage("Pasted " + nodeData.getAsString(true) + " to Data-Paste.yml with current time stamp.");
+                plugin.pasteData(nodeData.getAsString(true));
+            }
         }
     }
 

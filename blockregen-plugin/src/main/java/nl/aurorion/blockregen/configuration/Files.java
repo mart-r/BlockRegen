@@ -1,7 +1,7 @@
 package nl.aurorion.blockregen.configuration;
 
-import nl.aurorion.blockregen.BlockRegen;
 import lombok.Getter;
+import nl.aurorion.blockregen.BlockRegen;
 
 public class Files {
 
@@ -15,6 +15,8 @@ public class Files {
     private ConfigFile blockList;
     @Getter
     private ConfigFile regions;
+    @Getter
+    private ConfigFile dataPaste;
 
     public Files(BlockRegen plugin) {
         this.plugin = plugin;
@@ -26,5 +28,6 @@ public class Files {
         messages = new ConfigFile(plugin, "Messages.yml");
         blockList = new ConfigFile(plugin, "Blocklist.yml");
         regions = new ConfigFile(plugin, "Regions.yml");
+        dataPaste = new ConfigFile(plugin, "Data-Paste.yml");
     }
 }

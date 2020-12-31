@@ -2,8 +2,8 @@ package nl.aurorion.blockregen.api;
 
 import lombok.Getter;
 import lombok.Setter;
-import nl.aurorion.blockregen.NodeData;
 import nl.aurorion.blockregen.system.regeneration.struct.RegenerationProcess;
+import nl.aurorion.blockregen.version.api.INodeData;
 import org.bukkit.event.Cancellable;
 
 /**
@@ -32,11 +32,11 @@ public class BlockRegenBlockRegenerationEvent extends BlockRegenBlockEvent imple
      * Shortcuts.
      * */
 
-    public NodeData getRegenerateInto() {
+    public INodeData getRegenerateInto() {
         return regenerationProcess.getRegenerateInto();
     }
 
-    public void setRegenerateInto(NodeData nodeData) {
+    public void setRegenerateInto(INodeData nodeData) {
         regenerationProcess.setRegenerateInto(nodeData);
     }
 }

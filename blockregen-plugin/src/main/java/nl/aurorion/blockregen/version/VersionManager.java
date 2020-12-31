@@ -6,18 +6,20 @@ import lombok.Getter;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.ParseUtil;
 import nl.aurorion.blockregen.version.ancient.AncientMethods;
+import nl.aurorion.blockregen.version.api.INodeData;
 import nl.aurorion.blockregen.version.api.Methods;
 import nl.aurorion.blockregen.version.api.WorldEditProvider;
 import nl.aurorion.blockregen.version.api.WorldGuardProvider;
 import nl.aurorion.blockregen.version.current.LatestMethods;
+import nl.aurorion.blockregen.version.current.LatestNodeData;
 import nl.aurorion.blockregen.version.current.LatestWorldEditProvider;
 import nl.aurorion.blockregen.version.current.LatestWorldGuardProvider;
-import nl.aurorion.blockregen.version.legacy.LegacyMethods;
-import nl.aurorion.blockregen.version.legacy.LegacyWorldEditProvider;
-import nl.aurorion.blockregen.version.legacy.LegacyWorldGuardProvider;
+import nl.aurorion.blockregen.version.legacy.*;
 import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
 import org.bukkit.plugin.Plugin;
 
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +39,8 @@ public class VersionManager {
     private WorldGuardProvider worldGuardProvider;
     @Getter
     private Methods methods;
+
+    private Supplier<INodeData> nodeDataInstanceProvider;
 
     public VersionManager(BlockRegen plugin) {
         this.plugin = plugin;
@@ -60,6 +64,10 @@ public class VersionManager {
                 if (worldGuard != null)
                     useWorldGuard(LegacyWorldGuardProvider::new);
                 this.methods = new AncientMethods();
+                this.nodeDataInstanceProvider = LegacyNodeData::new;
+
+                plugin.getGsonHelper().getBuilder().registerTypeAdapter(INodeData.class, new LegacyNodeDataAdapter());
+                plugin.getGsonHelper().build();
                 break;
             case "v1_9":
             case "v1_10":
@@ -70,6 +78,10 @@ public class VersionManager {
                 if (worldGuard != null)
                     useWorldGuard(LegacyWorldGuardProvider::new);
                 this.methods = new LegacyMethods();
+                this.nodeDataInstanceProvider = LegacyNodeData::new;
+
+                plugin.getGsonHelper().getBuilder().registerTypeAdapter(INodeData.class, new LegacyNodeDataAdapter());
+                plugin.getGsonHelper().build();
                 break;
             case "v1_13":
             case "v1_14":
@@ -81,7 +93,19 @@ public class VersionManager {
                 if (worldGuard != null)
                     useWorldGuard(LatestWorldGuardProvider::new);
                 this.methods = new LatestMethods();
+
+                this.nodeDataInstanceProvider = LatestNodeData::new;
+                plugin.getGsonHelper().getBuilder().registerTypeAdapter(INodeData.class, new LegacyNodeDataAdapter());
+                plugin.getGsonHelper().build();
         }
+    }
+
+    public INodeData obtainNodeData() {
+        return nodeDataInstanceProvider.get();
+    }
+
+    public INodeData obtainNodeData(Block block) {
+        return obtainNodeData().fromBlock(block);
     }
 
     public interface InstanceProvider<X, Y> {

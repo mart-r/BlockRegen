@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.StringUtil;
-import nl.aurorion.blockregen.util.Reflection;
+import nl.aurorion.blockregen.Reflection;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Constructor;

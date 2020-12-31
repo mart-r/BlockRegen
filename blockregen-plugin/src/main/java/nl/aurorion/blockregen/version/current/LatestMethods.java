@@ -1,11 +1,9 @@
 package nl.aurorion.blockregen.version.current;
 
 import com.google.common.base.Strings;
-import nl.aurorion.blockregen.NodeData;
 import nl.aurorion.blockregen.StringUtil;
 import nl.aurorion.blockregen.version.api.Methods;
 import org.bukkit.Bukkit;
-import org.bukkit.block.Block;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -58,16 +56,6 @@ public class LatestMethods implements Methods {
         } catch (IllegalArgumentException e) {
             return null;
         }
-    }
-
-    @Override
-    public void setType(@NotNull Block block, @NotNull NodeData nodeData) {
-        nodeData.place(block);
-    }
-
-    @Override
-    public boolean compareType(@NotNull Block block, @NotNull NodeData nodeData) {
-        return nodeData.matches(block);
     }
 
     @Override

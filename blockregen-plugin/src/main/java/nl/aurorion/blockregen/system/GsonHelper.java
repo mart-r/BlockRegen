@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import lombok.Getter;
 import nl.aurorion.blockregen.ConsoleOutput;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,17 +32,24 @@ import java.util.concurrent.CompletionException;
  */
 public class GsonHelper {
 
-    private final Gson gson;
+    private Gson gson;
+
+    @Getter
+    private final GsonBuilder builder;
 
     public GsonHelper(boolean prettyPrinting) {
-        GsonBuilder gsonBuilder = new GsonBuilder();
+        this.builder = new GsonBuilder();
         if (prettyPrinting)
-            gsonBuilder.setPrettyPrinting();
-        this.gson = gsonBuilder.create();
+            builder.setPrettyPrinting();
+        build();
     }
 
     public GsonHelper() {
         this(false);
+    }
+
+    public void build() {
+        this.gson = builder.create();
     }
 
     public static <T> Type mapList(@NotNull Class<T> innerType) {
@@ -57,7 +65,9 @@ public class GsonHelper {
      * Asynchronously read ByteBuffer from a file.
      */
     @NotNull
-    public CompletableFuture<ByteBuffer> read(@NotNull final Path path) {
+    public CompletableFuture<ByteBuffer> read(
+            @NotNull
+            final Path path) {
 
         AsynchronousFileChannel channel;
         long size;
@@ -128,7 +138,9 @@ public class GsonHelper {
      * @return CompletableFuture with the resulting list or null.
      */
     @NotNull
-    public <T> CompletableFuture<List<T>> loadListAsync(@NotNull final String dataPath, @NotNull Class<T> innerClazz) {
+    public <T> CompletableFuture<List<T>> loadListAsync(
+            @NotNull
+            final String dataPath, @NotNull Class<T> innerClazz) {
         Path path = Paths.get(dataPath);
 
         if (!Files.exists(path))
@@ -152,7 +164,11 @@ public class GsonHelper {
      * @return CompletableFuture with the number of bytes written
      */
     @NotNull
-    public <T> CompletableFuture<Void> save(@NotNull final T input, @NotNull final String dataPath) {
+    public <T> CompletableFuture<Void> save(
+            @NotNull
+            final T input,
+            @NotNull
+            final String dataPath) {
 
         Path path = Paths.get(dataPath);
 

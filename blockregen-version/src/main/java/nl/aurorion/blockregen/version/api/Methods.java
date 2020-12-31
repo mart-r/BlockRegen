@@ -1,8 +1,6 @@
 package nl.aurorion.blockregen.version.api;
 
 
-import nl.aurorion.blockregen.NodeData;
-import org.bukkit.block.Block;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -23,10 +21,6 @@ public interface Methods {
     default BossBar createBossBar(@Nullable String text, @Nullable String color, @Nullable String style) {
         return null;
     }
-
-    void setType(@NotNull Block block, @NotNull NodeData nodeData);
-
-    boolean compareType(@NotNull Block block, @NotNull NodeData nodeData);
 
     ItemStack getItemInMainHand(@NotNull Player player);
 }

@@ -1,4 +1,4 @@
-package nl.aurorion.blockregen.util;
+package nl.aurorion.blockregen;
 
 import com.google.common.base.Strings;
 import lombok.experimental.UtilityClass;

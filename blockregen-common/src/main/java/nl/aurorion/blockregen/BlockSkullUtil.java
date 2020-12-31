@@ -10,12 +10,10 @@ import org.bukkit.SkullType;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Skull;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -56,21 +54,39 @@ public class BlockSkullUtil {
         blockWithBase64(block, urlToBase64(url));
     }
 
-    public void blockWithBase64(Block block, String base64) {
+    public boolean blockStateWithBase64(BlockState state, String base64) {
+        notNull(state, "state");
+        notNull(base64, "base64");
+
+        if (!(state instanceof Skull))
+            return false;
+
+        //setToSkull(block);
+        //state.update(false, false);
+
+        Skull skull = (Skull) state;
+        mutateBlockState(skull, base64);
+        return true;
+    }
+
+    public static void blockWithBase64(Block block, String base64) {
         notNull(block, "block");
         notNull(base64, "base64");
 
-        if (!(block.getState() instanceof Skull))
-            return;
-
-        //setToSkull(block);
+        setToSkull(block);
         Skull state = (Skull) block.getState();
         mutateBlockState(state, base64);
         state.update(false, false);
     }
 
-    @SuppressWarnings("deprecation")
-    private void setToSkull(Block block) {
+    /*public boolean blockWithBase64(Block block, String base64) {
+        notNull(block, "block");
+        notNull(base64, "base64");
+
+        return blockStateWithBase64(block.getState(), base64);
+    }*/
+
+    private static void setToSkull(Block block) {
         try {
             block.setType(Material.valueOf("PLAYER_HEAD"), false);
         } catch (IllegalArgumentException e) {
@@ -79,6 +95,27 @@ public class BlockSkullUtil {
             state.setSkullType(SkullType.PLAYER);
             state.update(false, false);
         }
+    }
+
+    /*@SuppressWarnings("deprecation")
+    public void setToSkull(Block block) {
+        try {
+            block.setType(Material.valueOf("PLAYER_HEAD"), false);
+        } catch (IllegalArgumentException e) {
+            block.setType(Material.valueOf("SKULL"), false);
+            setSkullType(block.getState());
+        }
+    }*/
+
+    @SuppressWarnings("deprecation")
+    public void setSkullType(BlockState state) {
+
+        if (!(state instanceof Skull))
+            return;
+
+        Skull skull = (Skull) state;
+        skull.setSkullType(SkullType.PLAYER);
+        state.update(true, false);
     }
 
     private void notNull(Object o, String name) {
@@ -164,7 +201,21 @@ public class BlockSkullUtil {
         }
     }
 
-    private void mutateBlockState(Skull block, String b64) {
+    /*private boolean mutateBlockState(Skull block, String b64) {
+        try {
+            if (blockProfileField == null) {
+                blockProfileField = block.getClass().getDeclaredField("profile");
+                blockProfileField.setAccessible(true);
+            }
+            blockProfileField.set(block, makeProfile(b64));
+            return true;
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }*/
+
+    private static void mutateBlockState(Skull block, String b64) {
         try {
             if (blockProfileField == null) {
                 blockProfileField = block.getClass().getDeclaredField("profile");
@@ -173,27 +224,6 @@ public class BlockSkullUtil {
             blockProfileField.set(block, makeProfile(b64));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             e.printStackTrace();
-        }
-    }
-
-    private void mutateItemMeta(SkullMeta meta, String b64) {
-        try {
-            if (metaSetProfileMethod == null) {
-                metaSetProfileMethod = meta.getClass().getDeclaredMethod("setProfile", GameProfile.class);
-                metaSetProfileMethod.setAccessible(true);
-            }
-            metaSetProfileMethod.invoke(meta, makeProfile(b64));
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
-            try {
-                if (metaProfileField == null) {
-                    metaProfileField = meta.getClass().getDeclaredField("profile");
-                    metaProfileField.setAccessible(true);
-                }
-                metaProfileField.set(meta, makeProfile(b64));
-
-            } catch (NoSuchFieldException | IllegalAccessException ex2) {
-                ex2.printStackTrace();
-            }
         }
     }
 }

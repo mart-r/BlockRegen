@@ -30,9 +30,15 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
+import java.util.UUID;
 
 public class BlockRegen extends JavaPlugin {
+
+    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd-hh/mm/ss");
 
     public static BlockRegen getInstance() {
         return getPlugin(BlockRegen.class);
@@ -100,11 +106,11 @@ public class BlockRegen extends JavaPlugin {
         versionManager = new VersionManager(this);
         consoleOutput.info("Running on version " + versionManager.getVersion());
 
+        gsonHelper = new GsonHelper();
+
         versionManager.load();
 
         jsonMessenger = new JsonMessenger(this);
-
-        gsonHelper = new GsonHelper();
 
         particleManager = new ParticleManager();
 
@@ -274,6 +280,11 @@ public class BlockRegen extends JavaPlugin {
     public void enableMetrics() {
         new MetricsLite(this);
         consoleOutput.info("&8MetricsLite enabled");
+    }
+
+    public void pasteData(String data) {
+        files.getDataPaste().getFileConfiguration().set(DATE_FORMAT.format(new Date(System.currentTimeMillis())), data);
+        files.getDataPaste().save();
     }
 
     @Override

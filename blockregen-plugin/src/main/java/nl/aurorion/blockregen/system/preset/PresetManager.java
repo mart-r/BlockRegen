@@ -4,13 +4,13 @@ import com.cryptomorin.xseries.XSound;
 import com.google.common.base.Strings;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.ConsoleOutput;
-import nl.aurorion.blockregen.NodeData;
 import nl.aurorion.blockregen.system.event.struct.PresetEvent;
 import nl.aurorion.blockregen.system.preset.struct.Amount;
 import nl.aurorion.blockregen.system.preset.struct.BlockPreset;
 import nl.aurorion.blockregen.system.preset.struct.PresetConditions;
 import nl.aurorion.blockregen.system.preset.struct.PresetRewards;
 import nl.aurorion.blockregen.system.preset.struct.material.DynamicMaterial;
+import nl.aurorion.blockregen.version.api.INodeData;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -27,22 +27,22 @@ public class PresetManager {
 
     private final Map<String, BlockPreset> presets = new HashMap<>();
 
-    private final Map<String, NodeData> typeAliases = new HashMap<>();
+    private final Map<String, INodeData> typeAliases = new HashMap<>();
 
     public PresetManager(BlockRegen plugin) {
         this.plugin = plugin;
     }
 
     @Contract("null -> null")
-    public NodeData getNodeData(String key) {
+    public INodeData getNodeData(String key) {
         if (Strings.isNullOrEmpty(key))
             return null;
 
-        return typeAliases.containsKey(key) ? typeAliases.get(key) : NodeData.fromMaterial(key.toUpperCase());
+        return typeAliases.containsKey(key) ? typeAliases.get(key) : plugin.getVersionManager().obtainNodeData().fromMaterialName(key.toUpperCase());
     }
 
     private String replaceAll(String str) {
-        for (Map.Entry<String, NodeData> entry : typeAliases.entrySet()) {
+        for (Map.Entry<String, INodeData> entry : typeAliases.entrySet()) {
             str = str.replace(entry.getKey(), entry.getValue().getAsString(true));
         }
         return str;
@@ -54,7 +54,7 @@ public class PresetManager {
 
     public Optional<BlockPreset> getPresetByBlock(Block block) {
         return presets.values().stream()
-                .filter(p -> plugin.getVersionManager().getMethods().compareType(block, p.getTargetMaterial()))
+                .filter(p -> p.getTargetMaterial().matches(block))
                 .findAny();
     }
 
@@ -70,7 +70,7 @@ public class PresetManager {
 
         if (aliases != null) {
             for (String key : aliases.getKeys(false)) {
-                NodeData value = NodeData.fromString(aliases.getString(key));
+                INodeData value = plugin.getVersionManager().obtainNodeData().fromString(aliases.getString(key));
                 if (value == null) {
                     ConsoleOutput.getInstance().warn("Invalid NodeData " + key);
                     continue;
@@ -112,7 +112,7 @@ public class PresetManager {
         if (Strings.isNullOrEmpty(targetMaterial))
             targetMaterial = name;
 
-        NodeData targetData = getNodeData(targetMaterial);
+        INodeData targetData = getNodeData(targetMaterial);
 
         if (targetData == null) {
             ConsoleOutput.getInstance().warn("Could not load preset " + name + ", invalid target material.");
@@ -128,7 +128,7 @@ public class PresetManager {
             replaceMaterial = "AIR";
 
         try {
-            preset.setReplaceMaterial(DynamicMaterial.fromString(replaceAll(replaceMaterial)));
+            preset.setReplaceMaterial(DynamicMaterial.fromString(plugin, replaceAll(replaceMaterial)));
         } catch (IllegalArgumentException e) {
             plugin.getConsoleOutput().err("Dynamic material ( " + replaceMaterial + " ) in replace-block material for " + name + " is invalid: " + e.getMessage());
             if (plugin.getConsoleOutput().isDebug())
@@ -143,7 +143,7 @@ public class PresetManager {
             regenerateInto = targetMaterial;
 
         try {
-            preset.setRegenMaterial(DynamicMaterial.fromString(replaceAll(regenerateInto)));
+            preset.setRegenMaterial(DynamicMaterial.fromString(plugin, replaceAll(regenerateInto)));
         } catch (IllegalArgumentException e) {
             plugin.getConsoleOutput().err("Dynamic material ( " + regenerateInto + " ) in regenerate-into material for " + name + " is invalid: " + e.getMessage());
             if (plugin.getConsoleOutput().isDebug())
@@ -153,6 +153,9 @@ public class PresetManager {
 
         // Delay
         preset.setDelay(Amount.load(file, "Blocks." + name + ".regen-delay", 3));
+
+        // Affect drops
+        preset.setAffectDrops(section.getBoolean("affect-drops", true));
 
         // Natural break
         preset.setNaturalBreak(section.getBoolean("natural-break", true));

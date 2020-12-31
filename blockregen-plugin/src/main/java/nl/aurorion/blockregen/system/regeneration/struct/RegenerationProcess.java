@@ -1,18 +1,16 @@
 package nl.aurorion.blockregen.system.regeneration.struct;
 
-import com.cryptomorin.xseries.XMaterial;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.ConsoleOutput;
-import nl.aurorion.blockregen.NodeData;
-import nl.aurorion.blockregen.util.LocationUtil;
 import nl.aurorion.blockregen.api.BlockRegenBlockRegenerationEvent;
 import nl.aurorion.blockregen.system.preset.struct.BlockPreset;
+import nl.aurorion.blockregen.util.LocationUtil;
+import nl.aurorion.blockregen.version.api.INodeData;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -26,7 +24,7 @@ public class RegenerationProcess implements Runnable {
     private transient Block block;
 
     @Getter
-    private XMaterial originalMaterial;
+    private INodeData originalMaterial;
 
     @Getter
     private String regionName;
@@ -45,13 +43,13 @@ public class RegenerationProcess implements Runnable {
     @Getter
     private transient long regenerationTime;
 
-    private transient NodeData replaceMaterial;
+    private transient INodeData replaceMaterial;
 
     @Getter
     private long timeLeft = -1;
 
     @Setter
-    private transient NodeData regenerateInto;
+    private transient INodeData regenerateInto;
 
     private transient BukkitTask task;
 
@@ -60,20 +58,20 @@ public class RegenerationProcess implements Runnable {
         this.preset = preset;
 
         this.presetName = preset.getName();
-        this.originalMaterial = XMaterial.matchXMaterial(block.getType());
+        this.originalMaterial = BlockRegen.getInstance().getVersionManager().obtainNodeData(block);
         this.location = new SimpleLocation(block.getLocation());
 
         getRegenerateInto();
         getReplaceMaterial();
     }
 
-    public NodeData getRegenerateInto() {
+    public INodeData getRegenerateInto() {
         if (this.regenerateInto == null)
             this.regenerateInto = preset.getRegenMaterial().get();
         return this.regenerateInto;
     }
 
-    public NodeData getReplaceMaterial() {
+    public INodeData getReplaceMaterial() {
         if (this.replaceMaterial == null)
             this.replaceMaterial = preset.getReplaceMaterial().get();
         return this.replaceMaterial;
@@ -106,7 +104,7 @@ public class RegenerationProcess implements Runnable {
 
         if (getReplaceMaterial() != null) {
             Bukkit.getScheduler().runTask(plugin, () -> {
-                plugin.getVersionManager().getMethods().setType(block, getReplaceMaterial());
+                getReplaceMaterial().mutate(block);
                 ConsoleOutput.getInstance().debug("Replaced block with " + replaceMaterial.toString());
             });
         }
@@ -157,12 +155,18 @@ public class RegenerationProcess implements Runnable {
     public void regenerateBlock() {
         BlockRegen plugin = BlockRegen.getInstance();
 
+        if (originalMaterial == null)
+            Bukkit.getLogger().info("ORM NULL");
+
         // Set type
-        NodeData regenerateInto = getRegenerateInto();
+        INodeData regenerateInto = getRegenerateInto();
         if (regenerateInto != null) {
-            plugin.getVersionManager().getMethods().setType(block, regenerateInto);
-            ConsoleOutput.getInstance().debug("Regenerated block " + originalMaterial + " into " + regenerateInto.toString());
-        }
+            // Copy rotation and data from original material
+            // Copy data if regenerateInto data is -1
+            regenerateInto.mutate(getBlock(), originalMaterial);
+            plugin.getConsoleOutput().debug("Regenerated block " + originalMaterial + " into " + regenerateInto.toString());
+        } else
+            originalMaterial.mutate(getBlock());
     }
 
     /**
@@ -187,9 +191,8 @@ public class RegenerationProcess implements Runnable {
 
     public void revertBlock() {
         // Set the block
-        Material material = originalMaterial.parseMaterial();
-        if (material != null) {
-            block.setType(material);
+        if (originalMaterial != null) {
+            originalMaterial.mutate(getBlock());
             ConsoleOutput.getInstance().debug("Placed back block " + originalMaterial);
         }
     }
