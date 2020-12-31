@@ -10,10 +10,7 @@ import nl.aurorion.blockregen.version.api.INodeData;
 import nl.aurorion.blockregen.version.api.Methods;
 import nl.aurorion.blockregen.version.api.WorldEditProvider;
 import nl.aurorion.blockregen.version.api.WorldGuardProvider;
-import nl.aurorion.blockregen.version.current.LatestMethods;
-import nl.aurorion.blockregen.version.current.LatestNodeData;
-import nl.aurorion.blockregen.version.current.LatestWorldEditProvider;
-import nl.aurorion.blockregen.version.current.LatestWorldGuardProvider;
+import nl.aurorion.blockregen.version.current.*;
 import nl.aurorion.blockregen.version.legacy.*;
 import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
@@ -95,7 +92,7 @@ public class VersionManager {
                 this.methods = new LatestMethods();
 
                 this.nodeDataInstanceProvider = LatestNodeData::new;
-                plugin.getGsonHelper().getBuilder().registerTypeAdapter(INodeData.class, new LegacyNodeDataAdapter());
+                plugin.getGsonHelper().getBuilder().registerTypeAdapter(INodeData.class, new LatestNodeDataAdapter());
                 plugin.getGsonHelper().build();
         }
     }
