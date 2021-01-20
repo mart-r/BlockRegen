@@ -1,5 +1,7 @@
 package nl.aurorion.blockregen.system.regeneration.struct;
 
+import com.cryptomorin.xseries.XBlock;
+import com.cryptomorin.xseries.XMaterial;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -68,13 +70,13 @@ public class RegenerationProcess implements Runnable {
     public INodeData getRegenerateInto() {
         if (this.regenerateInto == null)
             this.regenerateInto = preset.getRegenMaterial().get();
-        return this.regenerateInto;
+        return regenerateInto;
     }
 
     public INodeData getReplaceMaterial() {
         if (this.replaceMaterial == null)
             this.replaceMaterial = preset.getReplaceMaterial().get();
-        return this.replaceMaterial;
+        return replaceMaterial;
     }
 
     public boolean start() {
@@ -87,14 +89,14 @@ public class RegenerationProcess implements Runnable {
 
         ConsoleOutput.getInstance().debug("Time left: " + this.timeLeft / 1000 + "s");
 
-        if (this.timeLeft == -1) {
-            int regenDelay = Math.max(1, preset.getDelay().getInt());
+        if (timeLeft == -1) {
+            int regenDelay = preset.getDelay().getInt();
             this.timeLeft = regenDelay * 1000L;
         }
 
         this.regenerationTime = System.currentTimeMillis() + timeLeft;
 
-        if (this.regenerationTime <= System.currentTimeMillis()) {
+        if (timeLeft == 0 || regenerationTime <= System.currentTimeMillis()) {
             regenerate();
             ConsoleOutput.getInstance().debug("Regenerated the process already.");
             return false;
@@ -135,14 +137,14 @@ public class RegenerationProcess implements Runnable {
 
         // Call the event
         BlockRegenBlockRegenerationEvent blockRegenBlockRegenEvent = new BlockRegenBlockRegenerationEvent(this);
-        Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getServer().getPluginManager().callEvent(blockRegenBlockRegenEvent));
+        Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(blockRegenBlockRegenEvent));
 
         plugin.getRegenerationManager().removeProcess(this);
 
         if (blockRegenBlockRegenEvent.isCancelled())
             return;
 
-        Bukkit.getScheduler().runTask(plugin, this::regenerateBlock);
+        regenerateBlock();
 
         // Particle
         if (preset.getRegenerationParticle() != null)
@@ -179,16 +181,17 @@ public class RegenerationProcess implements Runnable {
 
         plugin.getRegenerationManager().removeProcess(this);
 
-        Bukkit.getScheduler().runTask(plugin, this::revertBlock);
+        revertBlock();
     }
 
     public void stop() {
         if (task != null) {
             task.cancel();
-            task = null;
+            this.task = null;
         }
     }
 
+    // Revert block to original state
     public void revertBlock() {
         // Set the block
         if (originalMaterial != null) {
