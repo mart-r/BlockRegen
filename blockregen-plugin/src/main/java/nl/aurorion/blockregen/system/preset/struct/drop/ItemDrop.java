@@ -8,8 +8,6 @@ import nl.aurorion.blockregen.ParseUtil;
 import nl.aurorion.blockregen.StringUtil;
 import nl.aurorion.blockregen.util.TextUtil;
 import nl.aurorion.blockregen.system.preset.struct.Amount;
-import nl.aurorion.blockregen.util.ParseUtil;
-import nl.aurorion.blockregen.util.TextUtil;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
