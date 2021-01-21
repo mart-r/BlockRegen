@@ -162,13 +162,15 @@ public class RegenerationProcess implements Runnable {
 
         // Set type
         INodeData regenerateInto = getRegenerateInto();
-        if (regenerateInto != null) {
-            // Copy rotation and data from original material
-            // Copy data if regenerateInto data is -1
-            regenerateInto.mutate(getBlock(), originalMaterial);
-            plugin.getConsoleOutput().debug("Regenerated block " + originalMaterial + " into " + regenerateInto.toString());
-        } else
-            originalMaterial.mutate(getBlock());
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (regenerateInto != null) {
+                // Copy rotation and data from original material
+                // Copy data if regenerateInto data is -1
+                regenerateInto.mutate(getBlock(), originalMaterial);
+                plugin.getConsoleOutput().debug("Regenerated block " + originalMaterial + " into " + regenerateInto.toString());
+            } else
+                originalMaterial.mutate(getBlock());
+        });
     }
 
     /**
@@ -195,8 +197,10 @@ public class RegenerationProcess implements Runnable {
     public void revertBlock() {
         // Set the block
         if (originalMaterial != null) {
-            originalMaterial.mutate(getBlock());
-            ConsoleOutput.getInstance().debug("Placed back block " + originalMaterial);
+            Bukkit.getScheduler().runTask(BlockRegen.getInstance(), () -> {
+                originalMaterial.mutate(getBlock());
+                ConsoleOutput.getInstance().debug("Placed back block " + originalMaterial);
+            });
         }
     }
 
