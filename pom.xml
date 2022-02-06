@@ -11,8 +11,6 @@
         <module>blockregen-version</module>
         <module>blockregen-common</module>
         <module>blockregen-plugin</module>
-        <!-- <module>blockregen-legacy</module>
-        <module>blockregen-ancient</module> -->
     </modules>
     <packaging>pom</packaging>
 

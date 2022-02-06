@@ -5,16 +5,12 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import lombok.Getter;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.util.ParseUtil;
-// import nl.aurorion.blockregen.version.ancient.AncientMethods;
 import nl.aurorion.blockregen.version.api.Methods;
 import nl.aurorion.blockregen.version.api.WorldEditProvider;
 import nl.aurorion.blockregen.version.api.WorldGuardProvider;
 import nl.aurorion.blockregen.version.current.LatestMethods;
 import nl.aurorion.blockregen.version.current.LatestWorldEditProvider;
 import nl.aurorion.blockregen.version.current.LatestWorldGuardProvider;
-// import nl.aurorion.blockregen.version.legacy.LegacyMethods;
-// import nl.aurorion.blockregen.version.legacy.LegacyWorldEditProvider;
-// import nl.aurorion.blockregen.version.legacy.LegacyWorldGuardProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
@@ -52,25 +48,6 @@ public class VersionManager {
          * Legacy - 1.12 - 1.8
          * */
         switch (version) {
-            // Try to catch 1.7 into legacy. Might work on some occasions.
-            // case "v1_7":
-            // case "v1_8":
-            //     if (worldEdit != null)
-            //         useWorldEdit(LegacyWorldEditProvider::new);
-            //     if (worldGuard != null)
-            //         useWorldGuard(LegacyWorldGuardProvider::new);
-            //     this.methods = new AncientMethods();
-            //     break;
-            // case "v1_9":
-            // case "v1_10":
-            // case "v1_11":
-            // case "v1_12":
-            //     if (worldEdit != null)
-            //         useWorldEdit(LegacyWorldEditProvider::new);
-            //     if (worldGuard != null)
-            //         useWorldGuard(LegacyWorldGuardProvider::new);
-            //     this.methods = new LegacyMethods();
-            //     break;
             case "v1_13":
             case "v1_14":
             case "v1_15":
@@ -125,14 +102,6 @@ public class VersionManager {
         int version = composeVersionNumber(versionString);
         int current = composeVersionNumber(this.version);
         return include ? current <= version : current < version;
-    }
-
-    private void setWorldEditProvider(WorldEditProvider worldEditProvider) {
-        this.worldEditProvider = worldEditProvider;
-    }
-
-    private void setWorldGuardProvider(WorldGuardProvider worldGuardProvider) {
-        this.worldGuardProvider = worldGuardProvider;
     }
 
     private void setupWorldEdit() {

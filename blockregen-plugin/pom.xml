@@ -87,18 +87,6 @@
             <version>3.6.9</version>
             <scope>compile</scope>
         </dependency>
-        <!-- <dependency>
-            <groupId>nl.aurorion.blockregen</groupId>
-            <artifactId>blockregen-legacy</artifactId>
-            <version>3.6.9</version>
-            <scope>compile</scope>
-        </dependency> -->
-        <!-- <dependency>
-            <groupId>nl.aurorion.blockregen</groupId>
-            <artifactId>blockregen-ancient</artifactId>
-            <version>3.6.9</version>
-            <scope>compile</scope>
-        </dependency> -->
         <!-- Gson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
