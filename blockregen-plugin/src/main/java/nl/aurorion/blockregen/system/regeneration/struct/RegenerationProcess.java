@@ -1,6 +1,5 @@
 package nl.aurorion.blockregen.system.regeneration.struct;
 
-import com.cryptomorin.xseries.XBlock;
 import com.cryptomorin.xseries.XMaterial;
 import lombok.Data;
 import lombok.Getter;
@@ -64,7 +63,7 @@ public class RegenerationProcess implements Runnable {
         this.preset = preset;
         this.presetName = preset.getName();
 
-        this.originalMaterial = XBlock.getType(block);
+        this.originalMaterial = XMaterial.matchXMaterial(block.getType());
         this.regenerateInto = preset.getRegenMaterial().get();
         this.replaceMaterial = preset.getReplaceMaterial().get();
     }
