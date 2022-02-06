@@ -3,7 +3,6 @@ package nl.aurorion.blockregen.configuration;
 import nl.aurorion.blockregen.BlockRegen;
 import lombok.Getter;
 import nl.aurorion.blockregen.ConsoleOutput;
-import nl.aurorion.blockregen.StringUtil;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
