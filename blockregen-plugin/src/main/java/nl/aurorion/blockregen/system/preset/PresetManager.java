@@ -5,6 +5,7 @@ import com.cryptomorin.xseries.XSound;
 import com.google.common.base.Strings;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.ConsoleOutput;
+import nl.aurorion.blockregen.hooks.MMOCoreHook;
 import nl.aurorion.blockregen.system.event.struct.PresetEvent;
 import nl.aurorion.blockregen.system.preset.struct.Amount;
 import nl.aurorion.blockregen.system.preset.struct.BlockPreset;
@@ -27,6 +28,7 @@ import java.util.regex.Pattern;
 
 public class PresetManager {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d*");
+    private static final MMOCoreHook MMO_CORE_HOOK = MMOCoreHook.getInstance();
 
     private final BlockRegen plugin;
 
@@ -182,6 +184,34 @@ public class PresetManager {
             String jobsRequired = section.getString("jobs-check");
             if (!Strings.isNullOrEmpty(jobsRequired)) {
                 conditions.setJobsRequired(jobsRequired);
+            }
+        }
+
+        // MMOItem type requirement
+        String toolId = section.getString("tool-required");
+        if (toolId != null) {
+            conditions.setMMOToolIdRequired(toolId);
+        }
+
+        // MMOCore proefession requirement
+        String professionRequired = section.getString("profession-level");
+        if (professionRequired != null) {
+            String[] split = professionRequired.split(" ");
+            if (split.length != 2) {
+                ConsoleOutput.getInstance().warn("Unable to parse profession-level " + professionRequired +
+                            " because it does not contain the level requirement information");
+            } else if (!NUMBER_PATTERN.matcher(split[1]).matches()) {
+                ConsoleOutput.getInstance().warn("Unable to parse profession-level " + professionRequired +
+                            " because the level is not a number");
+            } else {
+                String professionName = split[0];
+                if (!MMO_CORE_HOOK.isProfession(professionName)) {
+                    ConsoleOutput.getInstance().warn("Unable to parse profession-level " + professionRequired +
+                                " because the profession was not found");
+                } else {
+                    int level = Integer.valueOf(split[1]);
+                    conditions.setProfessionRequired(MMO_CORE_HOOK.getProfession(professionName), level);
+                }
             }
         }
 

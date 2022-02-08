@@ -6,7 +6,7 @@ import lombok.Getter;
 import nl.aurorion.blockregen.hooks.MMOItemsHook;
 
 public class MMOTargetMaterial implements TargetMaterial {
-    private static final MMOItemsHook MMO_HOOK = new MMOItemsHook();
+    private static final MMOItemsHook MMO_HOOK = MMOItemsHook.getInstance();
     @Getter
     private final int mmoId;
 

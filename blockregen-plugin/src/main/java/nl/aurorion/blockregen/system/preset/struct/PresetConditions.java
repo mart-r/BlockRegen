@@ -7,9 +7,12 @@ import com.gamingmesh.jobs.container.Job;
 import com.gamingmesh.jobs.container.JobsPlayer;
 import com.google.common.base.Strings;
 import lombok.NoArgsConstructor;
+import net.Indyuce.mmocore.experience.Profession;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.ConsoleOutput;
 import nl.aurorion.blockregen.Message;
+import nl.aurorion.blockregen.hooks.MMOCoreHook;
+import nl.aurorion.blockregen.hooks.MMOItemsHook;
 import nl.aurorion.blockregen.util.ParseUtil;
 import nl.aurorion.blockregen.util.TextUtil;
 import org.bukkit.Material;
@@ -27,6 +30,8 @@ import java.util.stream.Collectors;
 
 @NoArgsConstructor
 public class PresetConditions {
+    private static final MMOCoreHook CORE_HOOK = MMOCoreHook.getInstance();
+    private static final MMOItemsHook ITEMS_HOOK = MMOItemsHook.getInstance();
 
     private final List<XMaterial> toolsRequired = new ArrayList<>();
 
@@ -34,8 +39,14 @@ public class PresetConditions {
 
     private final Map<Job, Integer> jobsRequired = new HashMap<>();
 
+    private String mmoToolId = null;
+
+    private Profession professionRequired;
+
+    private int professionLevel = 0;
+
     public boolean check(Player player) {
-        return checkTools(player) && checkEnchants(player) && checkJobs(player);
+        return checkTools(player) && checkEnchants(player) && checkJobs(player) && checkMMOTool(player) && checkMMOProfession(player);
     }
 
     public boolean checkTools(Player player) {
@@ -117,6 +128,20 @@ public class PresetConditions {
                 .collect(Collectors.joining(", "));
     }
 
+    public boolean checkMMOTool(Player player) {
+        if (mmoToolId == null) {
+            return true;
+        }
+        return ITEMS_HOOK.isOfType(player.getInventory().getItemInMainHand(), mmoToolId);
+    }
+
+    public boolean checkMMOProfession(Player player) {
+        if (professionRequired == null || professionLevel <= 0) {
+            return true;   
+        }
+        return CORE_HOOK.getLevel(player, professionRequired) >= professionLevel;
+    }
+
     public void setToolsRequired(@Nullable String input) {
 
         if (Strings.isNullOrEmpty(input))
@@ -186,4 +211,14 @@ public class PresetConditions {
             jobsRequired.put(job, level);
         }
     }
+
+    public void setMMOToolIdRequired(@Nullable String toolId) {
+        mmoToolId = toolId;
+    }
+
+    public void setProfessionRequired(Profession profession, int level) {
+        this.professionRequired = profession;
+        this.professionLevel = level;
+    }
+
 }
