@@ -10,6 +10,17 @@
 # Note no.3: Most Amounts (money, regen-delay, amount) support dynamic amounts (random) with a low and high.
 
 Blocks:
+  5: #This is the MMOItems Custom Block ID, Or you can use the other identifier which is also tied with the # ID which is the name for example "COOL_BLOCK"
+    replace-block: AIR
+    regen-delay:
+      low: 5
+      high: 10
+    console-commands:
+      - 'mi give BLOCK COOL_BLOCK %player% 1' 
+    profession-level: Mining 5 #So the player needs level 5 Mining to be able to break said block
+    tool-required: COOL_PICKAXE #This is where the ID of the item from MMOItems you want to allow breaking with
+    natural-break: false
+    drop-naturally: false
   # The block that gets broken
   DIAMOND_ORE:
 

@@ -11,6 +11,10 @@ import nl.aurorion.blockregen.system.preset.struct.BlockPreset;
 import nl.aurorion.blockregen.system.preset.struct.PresetConditions;
 import nl.aurorion.blockregen.system.preset.struct.PresetRewards;
 import nl.aurorion.blockregen.system.preset.struct.material.DynamicMaterial;
+import nl.aurorion.blockregen.system.preset.struct.material.MMOTargetMaterial;
+import nl.aurorion.blockregen.system.preset.struct.material.RegularTargetMaterial;
+import nl.aurorion.blockregen.system.preset.struct.material.TargetMaterial;
+
 import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -19,8 +23,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 public class PresetManager {
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d*");
 
     private final BlockRegen plugin;
 
@@ -36,7 +42,8 @@ public class PresetManager {
 
     public Optional<BlockPreset> getPresetByBlock(Block block) {
         return presets.values().stream()
-                .filter(preset -> plugin.getVersionManager().getMethods().compareType(block, preset.getTargetMaterial()))
+                .filter(preset -> preset.getTargetMaterial().matchesMaterial(block))
+                //plugin.getVersionManager().getMethods().compareType(block, preset.getTargetMaterial()))
                 .findAny();
     }
 
@@ -77,14 +84,20 @@ public class PresetManager {
         if (Strings.isNullOrEmpty(targetMaterial))
             targetMaterial = name;
 
-        Optional<XMaterial> xMaterial = XMaterial.matchXMaterial(targetMaterial.toUpperCase());
-
-        if (!xMaterial.isPresent()) {
-            ConsoleOutput.getInstance().warn("Could not load preset " + name + ", invalid target material.");
-            return;
+        TargetMaterial target;
+        if (NUMBER_PATTERN.matcher(targetMaterial).matches()) {
+            target = new MMOTargetMaterial(Integer.valueOf(targetMaterial));
+        } else {
+            Optional<XMaterial> xMaterial = XMaterial.matchXMaterial(targetMaterial.toUpperCase());
+    
+            if (!xMaterial.isPresent()) {
+                ConsoleOutput.getInstance().warn("Could not load preset " + name + ", invalid target material.");
+                return;
+            }
+            target = new RegularTargetMaterial(xMaterial.get());
         }
 
-        preset.setTargetMaterial(xMaterial.get());
+        preset.setTargetMaterial(target);
 
         // Replace material
         String replaceMaterial = section.getString("replace-block");
