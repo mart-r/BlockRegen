@@ -3,10 +3,10 @@ package nl.aurorion.blockregen.system.preset.struct.material;
 import org.bukkit.block.Block;
 
 import lombok.Getter;
-import nl.aurorion.blockregen.hooks.MMOHook;
+import nl.aurorion.blockregen.hooks.MMOItemsHook;
 
 public class MMOTargetMaterial implements TargetMaterial {
-    private static final MMOHook MMO_HOOK = new MMOHook();
+    private static final MMOItemsHook MMO_HOOK = new MMOItemsHook();
     @Getter
     private final int mmoId;
 

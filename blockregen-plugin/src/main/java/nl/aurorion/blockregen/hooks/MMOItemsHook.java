@@ -7,10 +7,10 @@ import org.bukkit.block.Block;
 import net.Indyuce.mmoitems.MMOItems;
 import net.Indyuce.mmoitems.api.block.CustomBlock;
 
-public final class MMOHook {
+public final class MMOItemsHook {
     private final MMOItems mmoItems;
 
-    public MMOHook() {
+    public MMOItemsHook() {
         mmoItems = MMOItems.plugin;
     }
 
