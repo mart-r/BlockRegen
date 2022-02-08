@@ -111,5 +111,25 @@
             <version>8.3.0</version>
             <scope>compile</scope>
         </dependency>
+        <!-- These are LOCAL depndencies-->
+        <dependency>
+          <groupId>mmo.stuff</groupId>
+          <artifactId>mythiclib</artifactId>
+          <version>1.2</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>mmo.stuff</groupId>
+          <artifactId>mmoitems</artifactId>
+          <version>6.6.6</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>mmo.stuff</groupId>
+          <artifactId>mmocore</artifactId>
+          <version>1.8.3</version>
+          <scope>provided</scope>
+        </dependency>
+        <!-- End LOCAL depndencies-->
     </dependencies>
 </project>
