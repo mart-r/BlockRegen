@@ -154,7 +154,13 @@ public class PresetConditions {
         if (professionRequired == null || professionLevel <= 0) {
             return true;   
         }
-        return CORE_HOOK.getLevel(player, professionRequired) >= professionLevel;
+        boolean hasLevel = CORE_HOOK.getLevel(player, professionRequired) >= professionLevel;
+        if (!hasLevel) {
+            player.sendMessage(Message.PROFESSION_REQUIRED_ERROR.get(player)
+                    .replace("%profession%", professionRequired.getName())
+                    .replace("%level%", String.valueOf(professionLevel)));
+        }
+        return hasLevel;
     }
 
     public void setToolsRequired(@Nullable String input) {
