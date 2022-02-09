@@ -65,11 +65,15 @@ public class PresetConditions {
     }
 
     private String composeToolRequirements() {
-        return toolsRequired.stream()
+        String str = toolsRequired.stream()
                 .map(xMaterial -> TextUtil.capitalize(xMaterial.toString()
                         .toLowerCase()
                         .replace("_", " ")))
                 .collect(Collectors.joining(", "));
+        if (mmoToolId == null) {
+            return str;
+        }
+        return str + TextUtil.capitalize(mmoToolId);
     }
 
     public boolean checkEnchants(Player player) {
@@ -158,6 +162,7 @@ public class PresetConditions {
                     ConsoleOutput.getInstance().warn("Could not parse tool material " + loop);
                     continue;
                 }
+                continue;
             }
             toolsRequired.add(material);
         }
