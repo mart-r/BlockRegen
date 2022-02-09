@@ -15,6 +15,8 @@ import nl.aurorion.blockregen.hooks.MMOCoreHook;
 import nl.aurorion.blockregen.hooks.MMOItemsHook;
 import nl.aurorion.blockregen.util.ParseUtil;
 import nl.aurorion.blockregen.util.TextUtil;
+
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -152,6 +154,10 @@ public class PresetConditions {
         toolsRequired.clear();
         for (String loop : arr) {
             XMaterial material = ParseUtil.parseMaterial(loop);
+            if (StringUtils.isNumeric(loop)) {
+                setMMOToolIdRequired(loop);
+                continue;
+            }
             if (material == null) {
                 ConsoleOutput.getInstance().warn("Could not parse tool material " + loop);
                 continue;

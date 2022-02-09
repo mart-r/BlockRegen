@@ -187,12 +187,6 @@ public class PresetManager {
             }
         }
 
-        // MMOItem type requirement
-        String toolId = section.getString("tool-required");
-        if (toolId != null) {
-            conditions.setMMOToolIdRequired(toolId);
-        }
-
         // MMOCore proefession requirement
         String professionRequired = section.getString("profession-level");
         if (professionRequired != null) {
