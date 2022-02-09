@@ -44,4 +44,11 @@ public final class MMOItemsHook {
         return expectedId.equals(idOfItem);
     }
 
+    public void setType(Block block, int id) {
+        CustomBlock cb = mmoItems.getCustomBlocks().getBlock(id);
+        block.setType(cb.getState().getType(), false);
+        block.setBlockData(cb.getState().getBlockData(), false);
+        // TODO - call event?
+    }
+
 }

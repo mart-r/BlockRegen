@@ -6,4 +6,6 @@ public interface TargetMaterial {
 
     boolean matchesMaterial(Block block);
 
+    void setType(Block block);
+
 }

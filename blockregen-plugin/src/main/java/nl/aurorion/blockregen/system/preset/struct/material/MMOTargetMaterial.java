@@ -19,4 +19,9 @@ public class MMOTargetMaterial implements TargetMaterial {
         return MMO_HOOK.isMMOItemOfType(block, mmoId);
     }
 
+    @Override
+    public void setType(Block block) {
+        MMO_HOOK.setType(block, mmoId);
+    }
+
 }

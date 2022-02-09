@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.util.ParseUtil;
+
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -14,20 +16,20 @@ public class DynamicMaterial {
 
     @Getter
     @Setter
-    private XMaterial defaultMaterial;
+    private TargetMaterial defaultMaterial;
 
-    private final List<XMaterial> valuedMaterials = new ArrayList<>();
+    private final List<TargetMaterial> valuedMaterials = new ArrayList<>();
 
-    public DynamicMaterial(XMaterial defaultMaterial) {
+    public DynamicMaterial(TargetMaterial defaultMaterial) {
         this.defaultMaterial = defaultMaterial;
     }
 
-    public DynamicMaterial(XMaterial defaultMaterial, Collection<XMaterial> valuedMaterials) {
+    public DynamicMaterial(TargetMaterial defaultMaterial, Collection<TargetMaterial> valuedMaterials) {
         this.defaultMaterial = defaultMaterial;
         this.valuedMaterials.addAll(valuedMaterials);
     }
 
-    public List<XMaterial> getValuedMaterials() {
+    public List<TargetMaterial> getValuedMaterials() {
         return Collections.unmodifiableList(valuedMaterials);
     }
 
@@ -35,11 +37,14 @@ public class DynamicMaterial {
 
         if (Strings.isNullOrEmpty(input))
             throw new IllegalArgumentException("Input string cannot be null");
+        if (StringUtils.isNumeric(input)) {
+            return mmoItemFromString(Integer.valueOf(input));
+        }
 
         input = input.replace(" ", "").trim().toUpperCase();
 
         List<String> materials;
-        List<XMaterial> valuedMaterials = new ArrayList<>();
+        List<TargetMaterial> valuedMaterials = new ArrayList<>();
         XMaterial defaultMaterial = null;
 
         if (!input.contains(";")) {
@@ -47,7 +52,7 @@ public class DynamicMaterial {
 
             if (defaultMaterial == null)
                 throw new IllegalArgumentException("Invalid block material " + input);
-            return new DynamicMaterial(defaultMaterial);
+            return new DynamicMaterial(new RegularTargetMaterial(defaultMaterial));
         }
 
         materials = Arrays.asList(input.split(";"));
@@ -61,7 +66,7 @@ public class DynamicMaterial {
             if (defaultMaterial == null)
                 throw new IllegalArgumentException("Invalid block material " + materials.get(0));
 
-            return new DynamicMaterial(defaultMaterial);
+            return new DynamicMaterial(new RegularTargetMaterial(defaultMaterial));
         }
 
         int total = 0;
@@ -86,23 +91,27 @@ public class DynamicMaterial {
                 continue;
 
             for (int i = 0; i < chance; i++)
-                valuedMaterials.add(mat);
+                valuedMaterials.add(new RegularTargetMaterial(mat));
         }
 
         if (defaultMaterial != null) {
-            for (int i = 0; i < (100 - total); i++) valuedMaterials.add(defaultMaterial);
+            for (int i = 0; i < (100 - total); i++) valuedMaterials.add(new RegularTargetMaterial(defaultMaterial));
         }
 
-        return new DynamicMaterial(defaultMaterial, valuedMaterials);
+        return new DynamicMaterial(new RegularTargetMaterial(defaultMaterial), valuedMaterials);
     }
 
-    private XMaterial pickRandom() {
-        XMaterial pickedMaterial = valuedMaterials.get(BlockRegen.getInstance().getRandom().nextInt(valuedMaterials.size()));
+    public static DynamicMaterial mmoItemFromString(int id) {
+        return new DynamicMaterial(new MMOTargetMaterial(id));
+    }
+
+    private TargetMaterial pickRandom() {
+        TargetMaterial pickedMaterial = valuedMaterials.get(BlockRegen.getInstance().getRandom().nextInt(valuedMaterials.size()));
         return pickedMaterial != null ? pickedMaterial : defaultMaterial;
     }
 
     @NotNull
-    public XMaterial get() {
+    public TargetMaterial get() {
         return valuedMaterials.isEmpty() ? defaultMaterial : pickRandom();
     }
 }

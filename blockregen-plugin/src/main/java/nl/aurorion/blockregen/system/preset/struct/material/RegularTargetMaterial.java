@@ -21,4 +21,9 @@ public class RegularTargetMaterial implements TargetMaterial {
         return PLUGIN.getVersionManager().getMethods().compareType(block, xMaterial);
     }
 
+    @Override
+    public void setType(Block block) {
+        PLUGIN.getVersionManager().getMethods().setType(block, xMaterial);
+    }
+
 }

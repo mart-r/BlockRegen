@@ -52,6 +52,7 @@ public class BlockListener implements Listener {
         Block block = event.getBlock();
 
         BlockPreset preset = plugin.getPresetManager().getPresetByBlock(block).orElse(null);
+        plugin.getLogger().warning("PRESET: " + preset);
 
         // Check if the block is regenerating already
         if (plugin.getRegenerationManager().isRegenerating(block)) {

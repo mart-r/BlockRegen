@@ -8,6 +8,7 @@ import nl.aurorion.blockregen.BlockRegen;
 import nl.aurorion.blockregen.ConsoleOutput;
 import nl.aurorion.blockregen.api.BlockRegenBlockRegenerationEvent;
 import nl.aurorion.blockregen.system.preset.struct.BlockPreset;
+import nl.aurorion.blockregen.system.preset.struct.material.TargetMaterial;
 import nl.aurorion.blockregen.util.LocationUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -46,13 +47,13 @@ public class RegenerationProcess implements Runnable {
     @Getter
     private transient long regenerationTime;
 
-    private transient XMaterial replaceMaterial;
+    private transient TargetMaterial replaceMaterial;
 
     @Getter
     private long timeLeft = -1;
 
     @Setter
-    private transient XMaterial regenerateInto;
+    private transient TargetMaterial regenerateInto;
 
     private transient BukkitTask task;
 
@@ -68,14 +69,14 @@ public class RegenerationProcess implements Runnable {
         this.replaceMaterial = preset.getReplaceMaterial().get();
     }
 
-    public XMaterial getRegenerateInto() {
+    public TargetMaterial getRegenerateInto() {
         // Make sure we always get something.
         if (regenerateInto == null)
             this.regenerateInto = preset.getRegenMaterial().get();
         return regenerateInto;
     }
 
-    public XMaterial getReplaceMaterial() {
+    public TargetMaterial getReplaceMaterial() {
         // Make sure we always get something.
         if (replaceMaterial == null)
             this.replaceMaterial = preset.getReplaceMaterial().get();
@@ -112,7 +113,7 @@ public class RegenerationProcess implements Runnable {
 
         if (getReplaceMaterial() != null) {
             Bukkit.getScheduler().runTask(plugin, () -> {
-                plugin.getVersionManager().getMethods().setType(block, getReplaceMaterial());
+                getReplaceMaterial().setType(block);
                 plugin.getConsoleOutput().debug("Replaced block with " + replaceMaterial.toString());
             });
         }
@@ -165,10 +166,10 @@ public class RegenerationProcess implements Runnable {
         BlockRegen plugin = BlockRegen.getInstance();
 
         // Set type
-        XMaterial regenerateInto = getRegenerateInto();
+        TargetMaterial regenerateInto = getRegenerateInto();
         if (regenerateInto != null) {
             Bukkit.getScheduler().runTask(plugin, () -> {
-                plugin.getVersionManager().getMethods().setType(block, regenerateInto);
+                regenerateInto.setType(block);
                 ConsoleOutput.getInstance().debug("Regenerated block " + originalMaterial.toString() + " into " + regenerateInto.toString());
             });
         }
