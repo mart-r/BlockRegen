@@ -64,6 +64,16 @@ public final class MMOItemsHook {
         return expectedId.equals(idOfItem);
     }
 
+    public String getNameOf(String toolId) {
+        for (Type type : mmoItems.getTypes().getAll()) {
+            ItemStack ci = mmoItems.getItem(type, toolId);
+            if (ci != null) {
+                return ci.getItemMeta().getDisplayName();
+            }
+        }
+        throw new IllegalArgumentException("No tool found with ID " + toolId);
+    }
+
     public void setType(Block block, int id) {
         CustomBlock cb = mmoItems.getCustomBlocks().getBlock(id);
         block.setType(cb.getState().getType(), false);

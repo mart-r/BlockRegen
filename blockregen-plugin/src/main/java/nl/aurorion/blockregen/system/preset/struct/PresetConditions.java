@@ -73,7 +73,7 @@ public class PresetConditions {
         if (mmoToolId == null) {
             return str;
         }
-        String mmoTool = TextUtil.capitalize(mmoToolId);
+        String mmoTool = ITEMS_HOOK.getNameOf(mmoToolId);
         if (str.isEmpty()) {
             return mmoTool;
         } else {
