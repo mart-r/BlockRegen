@@ -228,6 +228,5 @@ public class PresetManager {
             plugin.getEventManager().addEvent(event);
 
         presets.put(name, preset);
-        plugin.getLogger().warning("Setting preset " + name + " to " + preset);
     }
 }
