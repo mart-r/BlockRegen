@@ -23,7 +23,7 @@ public final class MMOCoreHook {
     }
 
     public Profession getProfession(String name) {
-        return core.professionManager.get(name);
+        return core.professionManager.get(name.toLowerCase());
     }
 
     public int getLevel(Player player, Profession profession) {
