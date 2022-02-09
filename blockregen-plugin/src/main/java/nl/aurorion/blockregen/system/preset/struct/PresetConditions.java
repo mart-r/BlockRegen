@@ -73,7 +73,12 @@ public class PresetConditions {
         if (mmoToolId == null) {
             return str;
         }
-        return str + TextUtil.capitalize(mmoToolId);
+        String mmoTool = TextUtil.capitalize(mmoToolId);
+        if (str.isEmpty()) {
+            return mmoTool;
+        } else {
+            return str + ", " + mmoTool;
+        }
     }
 
     public boolean checkEnchants(Player player) {
@@ -137,7 +142,12 @@ public class PresetConditions {
         if (mmoToolId == null) {
             return true;
         }
-        return ITEMS_HOOK.isOfType(player.getInventory().getItemInMainHand(), mmoToolId);
+        boolean hasTool = ITEMS_HOOK.isOfType(player.getInventory().getItemInMainHand(), mmoToolId);
+        if (!hasTool) {
+            player.sendMessage(Message.TOOL_REQUIRED_ERROR.get(player)
+                    .replace("%tool%", composeToolRequirements()));
+        }
+        return hasTool;
     }
 
     public boolean checkMMOProfession(Player player) {
