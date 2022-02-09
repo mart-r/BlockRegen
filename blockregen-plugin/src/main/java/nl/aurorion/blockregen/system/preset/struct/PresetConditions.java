@@ -16,7 +16,6 @@ import nl.aurorion.blockregen.hooks.MMOItemsHook;
 import nl.aurorion.blockregen.util.ParseUtil;
 import nl.aurorion.blockregen.util.TextUtil;
 
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -154,13 +153,11 @@ public class PresetConditions {
         toolsRequired.clear();
         for (String loop : arr) {
             XMaterial material = ParseUtil.parseMaterial(loop);
-            if (StringUtils.isNumeric(loop)) {
-                setMMOToolIdRequired(loop);
-                continue;
-            }
             if (material == null) {
-                ConsoleOutput.getInstance().warn("Could not parse tool material " + loop);
-                continue;
+                if (!setMMOToolIdRequired(loop)) {
+                    ConsoleOutput.getInstance().warn("Could not parse tool material " + loop);
+                    continue;
+                }
             }
             toolsRequired.add(material);
         }
@@ -218,8 +215,13 @@ public class PresetConditions {
         }
     }
 
-    public void setMMOToolIdRequired(@Nullable String toolId) {
-        mmoToolId = toolId;
+    public boolean setMMOToolIdRequired(@Nullable String toolId) {
+        if (ITEMS_HOOK.isSpecialName(toolId)) {
+            mmoToolId = toolId;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public void setProfessionRequired(Profession profession, int level) {
